@@ -14,6 +14,14 @@ import type { Meal } from '../data/recipes';
 import { key } from '../lib/date';
 import { STACK_MATTINA_PRESTO } from '../data/supplements';
 
+export interface StatoSync {
+  collegato: boolean;
+  ultimaSync: string | null;   // ISO
+  passiMedi: number | null;
+  kcalAttiveMedie: number | null;
+  fcRiposo: number | null;
+}
+
 export interface MealEntry {
   id: string;
   data: string;
@@ -39,6 +47,7 @@ interface State {
   pasti: MealEntry[];
   preferiti: string[];
   onboardingFatto: boolean;
+  health: StatoSync;
 
   setProfile: (p: Profile) => void;
   aggiornaProfilo: (patch: Partial<Profile>) => void;
@@ -77,6 +86,7 @@ interface State {
   removePasto: (id: string) => void;
 
   togglePreferito: (exerciseId: string) => void;
+  setHealth: (patch: Partial<StatoSync>) => void;
 }
 
 const uid = () => Math.random().toString(36).slice(2, 10);
@@ -95,6 +105,13 @@ export const useStore = create<State>()(
       pasti: [],
       preferiti: [],
       onboardingFatto: false,
+      health: {
+        collegato: false,
+        ultimaSync: null,
+        passiMedi: null,
+        kcalAttiveMedie: null,
+        fcRiposo: null,
+      },
 
       setProfile: (p) =>
         set((s) => ({
@@ -122,6 +139,13 @@ export const useStore = create<State>()(
           logIntegratori: {},
           preferiti: [],
           onboardingFatto: false,
+          health: {
+            collegato: false,
+            ultimaSync: null,
+            passiMedi: null,
+            kcalAttiveMedie: null,
+            fcRiposo: null,
+          },
         }),
 
       addPeso: (e) =>
@@ -311,6 +335,8 @@ export const useStore = create<State>()(
             ? s.preferiti.filter((x) => x !== exerciseId)
             : [...s.preferiti, exerciseId],
         })),
+
+      setHealth: (patch) => set((s) => ({ health: { ...s.health, ...patch } })),
     }),
     { name: 'gymbro-v1' },
   ),

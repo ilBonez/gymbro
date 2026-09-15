@@ -1,0 +1,51 @@
+name: APK Android
+
+# Compila l'APK di debug nel cloud: serve perche' sulla macchina di sviluppo
+# Sophos Network Threat Protection blocca il canale loopback che il daemon
+# Gradle usa per parlare col client (java.io.IOException: Unable to establish
+# loopback connection).
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - uses: android-actions/setup-android@v3
+
+      - name: Installa le dipendenze
+        run: npm ci
+
+      - name: Controlla i dati statici
+        run: npm run check:data
+
+      - name: Build web
+        run: npm run build
+
+      - name: Sincronizza il progetto nativo
+        run: npx cap sync android
+
+      - name: Compila l'APK di debug
+        working-directory: android
+        run: ./gradlew assembleDebug --no-daemon
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: gymbro-debug-apk
+          path: android/app/build/outputs/apk/debug/app-debug.apk
+          if-no-files-found: error

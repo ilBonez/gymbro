@@ -6,6 +6,7 @@ import { Button, Card, Empty, Field, SectionTitle, Sheet, Stat, cx, inputCls } f
 import { giorniTra, oggi } from '../lib/date';
 import { bmi, bmiCategoria, pesoIdealeRange, variazionePesoAttesa } from '../lib/nutrition';
 import { useTargets } from '../lib/useTargets';
+import { HealthCard } from '../components/HealthCard';
 
 export default function Progressi() {
   const profile = useStore((s) => s.profile);
@@ -95,6 +96,8 @@ export default function Progressi() {
           sub="Per la tua altezza"
         />
       </div>
+
+      <HealthCard />
 
       <SectionTitle>Andamento peso</SectionTitle>
       {serie.length < 2 ? (

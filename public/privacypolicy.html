@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="it">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>GymBro — Informativa privacy</title>
+    <style>
+      :root { color-scheme: light dark; }
+      body {
+        margin: 0 auto;
+        max-width: 42rem;
+        padding: 2rem 1.25rem 4rem;
+        font: 16px/1.65 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+        color: #14181f;
+        background: #fff;
+      }
+      @media (prefers-color-scheme: dark) {
+        body { color: #e6ecf3; background: #0b0f14; }
+        h1, h2 { color: #fff; }
+        code { background: #1f2833; }
+      }
+      h1 { font-size: 1.55rem; margin: 0 0 .35rem; }
+      h2 { font-size: 1.05rem; margin: 2rem 0 .5rem; }
+      .data { color: #6b7a8d; font-size: .85rem; margin: 0 0 1.5rem; }
+      ul { padding-left: 1.2rem; }
+      li { margin: .35rem 0; }
+      code { background: #eef1f5; padding: .1rem .35rem; border-radius: .25rem; font-size: .9em; }
+      .box { border-left: 3px solid #14c76a; padding: .1rem 0 .1rem 1rem; margin: 1.25rem 0; }
+    </style>
+  </head>
+  <body>
+    <h1>Informativa privacy di GymBro</h1>
+    <p class="data">Ultimo aggiornamento: 15 settembre 2026</p>
+
+    <div class="box">
+      <p>
+        <strong>In breve:</strong> GymBro non ha un server, non ha account e non invia i tuoi dati a
+        nessuno. Tutto quello che l'app legge o scrive resta nella memoria del tuo telefono.
+      </p>
+    </div>
+
+    <h2>Chi tratta i dati</h2>
+    <p>
+      GymBro è un'applicazione personale che gira interamente sul dispositivo di chi la installa. Non
+      esiste un gestore del servizio a cui i dati vengano trasmessi, perché non c'è nessuna
+      trasmissione.
+    </p>
+
+    <h2>Dati che l'app conserva</h2>
+    <ul>
+      <li>Profilo: nome, sesso biologico, età, altezza, peso, livello di attività, obiettivo.</li>
+      <li>Allenamenti registrati: esercizi, serie, ripetizioni, carichi, durata, note.</li>
+      <li>Pianificazione settimanale, pasti registrati e lista della spesa.</li>
+      <li>Storico di peso, girovita ed eventuale percentuale di massa grassa.</li>
+    </ul>
+    <p>
+      Sono salvati nell'archivio locale dell'app (<code>localStorage</code>). Disinstallando l'app o
+      cancellandone i dati, spariscono. L'app offre un'esportazione manuale in JSON: quel file lo
+      gestisci tu.
+    </p>
+
+    <h2>Dati letti da Health Connect</h2>
+    <p>Se e solo se concedi i permessi, GymBro legge da Health Connect:</p>
+    <ul>
+      <li><strong>Peso</strong> — per aggiornare il monitoraggio senza riscriverlo a mano.</li>
+      <li><strong>Passi</strong> e <strong>calorie attive</strong> — per confrontare il movimento reale con il fabbisogno calorico stimato.</li>
+      <li><strong>Frequenza cardiaca</strong> — per stimare la frequenza a riposo.</li>
+      <li>
+        <strong>Storico oltre i 30 giorni</strong> — solo per mostrare l'andamento su un periodo più
+        lungo.
+      </li>
+    </ul>
+    <p>
+      Questi dati vengono letti al momento della sincronizzazione, mostrati nella schermata Progressi e,
+      nel caso del peso, salvati nel registro locale se sei tu a toccare "Importa". GymBro
+      <strong>non scrive nulla</strong> dentro Health Connect e non richiede permessi di scrittura.
+    </p>
+
+    <h2>Cosa non facciamo</h2>
+    <ul>
+      <li>Nessun invio a server, nostri o di terzi.</li>
+      <li>Nessuna pubblicità, nessun profilazione, nessun tracciamento analitico.</li>
+      <li>Nessuna condivisione o vendita di dati, sanitari e non.</li>
+      <li>Nessun dato sanitario usato per scopi diversi da quelli elencati sopra.</li>
+    </ul>
+
+    <h2>Revocare i permessi</h2>
+    <p>
+      Puoi togliere a GymBro l'accesso ai dati sanitari in qualsiasi momento da
+      <em>Impostazioni → Sicurezza e privacy → Health Connect</em> (Android 14 e successivi) oppure
+      dall'app Health Connect (Android 9-13). Da quel momento l'app smette di leggere, e i valori già
+      importati restano nel registro locale finché non li cancelli tu dalla schermata Progressi.
+    </p>
+
+    <h2>Avvertenza</h2>
+    <p>
+      GymBro non è un dispositivo medico. Calcoli calorici, programmi di allenamento e indicazioni sugli
+      integratori sono riferimenti generali per adulti sani e non sostituiscono il parere di un medico,
+      di un dietista o di un preparatore atletico.
+    </p>
+  </body>
+</html>
