@@ -14,6 +14,8 @@ import type { Meal } from '../data/recipes';
 import { key } from '../lib/date';
 import { STACK_MATTINA_PRESTO } from '../data/supplements';
 import type { Tema } from '../lib/theme';
+import { NOTIFICHE_DEFAULT } from '../lib/notifiche';
+import type { ImpostazioniNotifiche } from '../lib/notifiche';
 
 export interface StatoSync {
   collegato: boolean;
@@ -77,6 +79,7 @@ interface State {
   /** playlist Spotify: chiave = id della scheda, oppure 'default' */
   playlist: Record<string, Playlist>;
   tema: Tema;
+  notifiche: ImpostazioniNotifiche;
 
   setProfile: (p: Profile) => void;
   aggiornaProfilo: (patch: Partial<Profile>) => void;
@@ -125,6 +128,7 @@ interface State {
   setObiettiviAttivita: (patch: Partial<ObiettiviAttivita>) => void;
   setPlaylist: (chiave: string, p: Playlist | null) => void;
   setTema: (t: Tema) => void;
+  setNotifiche: (patch: Partial<ImpostazioniNotifiche>) => void;
 }
 
 const uid = () => Math.random().toString(36).slice(2, 10);
@@ -154,6 +158,7 @@ export const useStore = create<State>()(
       obiettiviAttivita: { kcal: 500, passi: 9000, sonnoOre: 7.5 },
       playlist: {},
       tema: 'sistema',
+      notifiche: NOTIFICHE_DEFAULT,
 
       setProfile: (p) =>
         set((s) => ({
@@ -404,6 +409,8 @@ export const useStore = create<State>()(
         }),
 
       setTema: (t) => set({ tema: t }),
+
+      setNotifiche: (patch) => set((s) => ({ notifiche: { ...s.notifiche, ...patch } })),
     }),
     { name: 'gymbro-v1' },
   ),

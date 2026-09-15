@@ -3,6 +3,7 @@ import { Navigate, Route, Routes } from 'react-router-dom';
 import { Layout } from './components/Layout';
 import { useStore } from './store/useStore';
 import { applicaTema, ascoltaSistema } from './lib/theme';
+import { backupSeServe } from './lib/backup';
 import Onboarding from './pages/Onboarding';
 import Dashboard from './pages/Dashboard';
 import Allena from './pages/Allena';
@@ -29,6 +30,11 @@ export default function App() {
     applicaTema(tema);
     return ascoltaSistema(tema, () => applicaTema(tema));
   }, [tema]);
+
+  // una copia al giorno, in silenzio: l'export manuale non se lo ricorda nessuno
+  useEffect(() => {
+    if (fatto) void backupSeServe();
+  }, [fatto]);
 
   if (!fatto) return <Onboarding />;
 

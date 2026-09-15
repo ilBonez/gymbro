@@ -26,9 +26,26 @@ export interface WeightEntry {
   data: string;       // yyyy-MM-dd
   pesoKg: number;
   massaGrassaPct?: number;
+  // circonferenze, tutte opzionali: si misurano quando si vuole
   vitaCm?: number;
+  colloCm?: number;
+  toraceCm?: number;
+  braccioCm?: number;
+  fianchiCm?: number;
+  cosciaCm?: number;
   note?: string;
 }
+
+export const CIRCONFERENZE = [
+  { campo: 'colloCm', label: 'Collo', dove: 'sotto il pomo d’Adamo' },
+  { campo: 'toraceCm', label: 'Torace', dove: 'all’altezza dei capezzoli, a fine espirazione' },
+  { campo: 'braccioCm', label: 'Braccio', dove: 'a metà bicipite, contratto' },
+  { campo: 'vitaCm', label: 'Vita', dove: 'all’ombelico, senza tirare in dentro' },
+  { campo: 'fianchiCm', label: 'Fianchi', dove: 'nel punto più largo dei glutei' },
+  { campo: 'cosciaCm', label: 'Coscia', dove: 'a metà, in piedi e rilassata' },
+] as const;
+
+export type CampoCirconferenza = (typeof CIRCONFERENZE)[number]['campo'];
 
 /** Un giorno pianificato dall'utente sul calendario. */
 export interface PlanDay {

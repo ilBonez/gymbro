@@ -7,6 +7,7 @@ import { Button, Card, SectionTitle, Tag } from '../components/ui';
 import type { LoggedExercise } from '../types';
 import { MusicaSheet } from '../components/MusicaSheet';
 import { kcalScheda } from '../lib/burn';
+import { suggerimentoCarico, ultimaEsecuzione } from '../lib/progressione';
 import { useTargets } from '../lib/useTargets';
 
 export default function WorkoutDetail() {
@@ -26,14 +27,15 @@ export default function WorkoutDetail() {
   const start = () => {
     if (attiva && !confirm('Hai già un allenamento in corso. Vuoi scartarlo e iniziare questo?')) return;
 
-    const precedente = sessioni.find((s) => s.workoutId === w.id);
     const esercizi: LoggedExercise[] = w.esercizi.map((e) => {
-      const old = precedente?.esercizi.find((x) => x.exerciseId === e.exerciseId);
+      const ultima = ultimaEsecuzione(sessioni, e.exerciseId)?.esercizio;
+      const sug = suggerimentoCarico(e, ultima);
       return {
         exerciseId: e.exerciseId,
         serie: Array.from({ length: e.serie }, (_, i) => ({
-          reps: old?.serie[i]?.reps ?? null,
-          kg: old?.serie[i]?.kg ?? null,
+          reps: ultima?.serie[i]?.reps ?? null,
+          // il carico parte da quello suggerito dalla progressione
+          kg: sug.kg ?? ultima?.serie[i]?.kg ?? null,
           fatto: false,
         })),
       };

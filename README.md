@@ -43,15 +43,26 @@ tutti gli effetti e continua a funzionare offline.
 | --- | --- |
 | **Home** | Allenamento di oggi, macro della giornata, checklist integratori, peso |
 | **Allena** | 4 programmi (definizione low carb, forza, massa, mantenimento), 16 schede, 86 esercizi con esecuzione ed errori comuni |
-| **Sessione** | Timer, log di serie/carico/ripetizioni, timer di recupero con beep, playlist Spotify |
+| **Sessione** | Timer, log di serie/carico/ripetizioni, carico suggerito dalla progressione, record personali, recupero con beep, playlist Spotify |
 | **Piano** | Calendario: stendi un programma su più settimane (anche solo lun-ven), calorie e passi giorno per giorno |
 | **Dieta** | Menu generato sui tuoi macro da 54 ricette, diario pasti (anche a mano o "sgarro"), ricettario, tabella sostituzioni |
 | **Spesa** | Lista dei 7 giorni raggruppata per reparto, con link di ricerca Eurospin |
-| **Progressi** | Peso, girovita, BMI, volume settimanale, anelli di movimento/passi/sonno da Health Connect |
+| **Progressi** | Peso, circonferenze, massa grassa stimata, serie settimanali per gruppo muscolare, anelli di movimento/passi/sonno da Health Connect |
 
 Calorie e macro: metabolismo basale con Mifflin-St Jeor, TDEE per livello di attività, macro per
 obiettivo (le regole stanno in [`src/lib/nutrition.ts`](src/lib/nutrition.ts)). Il blocco low carb è
 limitato a 4-6 settimane e l'app avvisa quando è ora di smettere.
+
+**Progressione dei carichi:** a ogni seduta l'app propone il peso da usare con la regola della doppia
+progressione — si sale solo dopo aver chiuso tutte le serie al tetto dell'intervallo, si cala dopo due
+serie sotto il minimo. Tiene il massimale stimato (Epley) per esercizio, il suo andamento e i record.
+
+**Backup:** i dati stanno solo sul dispositivo, quindi l'app ne salva una copia al giorno in
+`Documenti/GymBro` tenendo gli ultimi sette file. Dal profilo si ripristina da file, con anteprima e
+conferma. Nel browser resta il download manuale.
+
+**Promemoria:** notifiche locali per caffeina (calcolata all'indietro dall'ora di allenamento),
+allenamento, pesata del mattino e magnesio della sera. Solo nell'app installata.
 
 Ogni programma mostra anche quante calorie costa una seduta e che variazione di peso aspettarsi in una
 settimana: sono stime con un margine del 20-30%, utili per confrontare un blocco con l'altro.

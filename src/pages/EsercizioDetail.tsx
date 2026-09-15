@@ -1,8 +1,10 @@
 import { Link, Navigate, useParams } from 'react-router-dom';
-import { AlertCircle, ChevronRight, ListOrdered, Repeat, Star } from 'lucide-react';
+import { AlertCircle, ChevronRight, Repeat, Star, TrendingUp, Trophy } from 'lucide-react';
 import { esercizio } from '../lib/catalog';
 import { useStore } from '../store/useStore';
 import { Card, SectionTitle, Tag, cx } from '../components/ui';
+import { Sparkline } from '../components/Sparkline';
+import { affidabile, storicoEsercizio } from '../lib/progressione';
 
 export default function EsercizioDetail() {
   const { id = '' } = useParams();
@@ -15,19 +17,11 @@ export default function EsercizioDetail() {
 
   const preferito = preferiti.includes(e.id);
 
-  const storico = sessioni
-    .flatMap((s) =>
-      s.esercizi
-        .filter((x) => x.exerciseId === e.id)
-        .map((x) => ({
-          data: s.data,
-          migliore: x.serie
-            .filter((st) => st.fatto && st.kg)
-            .sort((a, b) => (b.kg ?? 0) - (a.kg ?? 0))[0],
-        })),
-    )
-    .filter((x) => x.migliore)
-    .slice(0, 5);
+  const storico = storicoEsercizio(sessioni, e.id);
+  const migliore = storico.length ? [...storico].sort((a, b) => b.stima - a.stima)[0] : null;
+  const ultimo = storico[storico.length - 1];
+  const progresso =
+    storico.length >= 2 ? +(ultimo.stima - storico[0].stima).toFixed(1) : null;
 
   return (
     <div>
@@ -110,22 +104,67 @@ export default function EsercizioDetail() {
         </>
       )}
 
-      {storico.length > 0 && (
+      {migliore && (
         <>
           <SectionTitle>I tuoi carichi</SectionTitle>
-          <Card className="!p-3.5">
-            <ul className="divide-y divide-line/60">
-              {storico.map((h, i) => (
-                <li key={i} className="flex items-center justify-between py-2 text-sm">
-                  <span className="inline-flex items-center gap-2 text-soft">
-                    <ListOrdered size={13} className="text-muted" />
-                    {h.data}
-                  </span>
-                  <span className="tabular-nums font-semibold">
-                    {h.migliore?.kg} kg × {h.migliore?.reps}
-                  </span>
-                </li>
-              ))}
+          <Card>
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <p className="flex items-center gap-1.5 text-[11px] uppercase tracking-wide text-muted">
+                  <Trophy size={12} className="text-brand-500" /> Record
+                </p>
+                <p className="mt-1 text-xl font-bold tabular-nums">
+                  {migliore.kg} kg × {migliore.reps}
+                </p>
+                <p className="text-[11px] text-muted">{migliore.data}</p>
+              </div>
+              <div className="text-right">
+                <p className="text-[11px] uppercase tracking-wide text-muted">Massimale stimato</p>
+                <p className="mt-1 text-xl font-bold tabular-nums text-brandink">
+                  {migliore.stima} kg
+                </p>
+                {!affidabile(migliore.reps) && (
+                  <p className="text-[10px] text-carb">stima poco attendibile sopra le 12 rip.</p>
+                )}
+              </div>
+            </div>
+
+            {storico.length >= 2 && (
+              <div className="mt-3 border-t border-line pt-3">
+                <div className="mb-1 flex items-center justify-between text-[11px]">
+                  <span className="text-muted">Massimale stimato, {storico.length} sedute</span>
+                  {progresso !== null && progresso !== 0 && (
+                    <span
+                      className={cx(
+                        'inline-flex items-center gap-1 font-semibold',
+                        progresso > 0 ? 'text-brandink' : 'text-carb',
+                      )}
+                    >
+                      <TrendingUp size={11} className={progresso < 0 ? 'rotate-180' : undefined} />
+                      {progresso > 0 ? '+' : ''}
+                      {progresso} kg
+                    </span>
+                  )}
+                </div>
+                <Sparkline valori={storico.map((p) => p.stima)} />
+              </div>
+            )}
+
+            <ul className="mt-3 divide-y divide-line/60 border-t border-line pt-1">
+              {[...storico]
+                .reverse()
+                .slice(0, 6)
+                .map((h, i) => (
+                  <li key={i} className="flex items-center justify-between py-2 text-sm">
+                    <span className="text-soft">{h.data}</span>
+                    <span className="tabular-nums">
+                      <span className="font-semibold">
+                        {h.kg} kg × {h.reps}
+                      </span>
+                      <span className="ml-2 text-[11px] text-muted">1RM ~{h.stima}</span>
+                    </span>
+                  </li>
+                ))}
             </ul>
           </Card>
         </>

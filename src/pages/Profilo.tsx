@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Download, Moon, RotateCcw, Save, Smartphone, Sun } from 'lucide-react';
+import { Moon, RotateCcw, Save, Smartphone, Sun } from 'lucide-react';
 import { useStore } from '../store/useStore';
 import { ACTIVITY_FACTORS, GOAL_RULES, bmi, bmiCategoria } from '../lib/nutrition';
 import type { ActivityLevel, Sex } from '../types';
@@ -7,6 +7,7 @@ import type { Goal } from '../data/programs';
 import { useTargets } from '../lib/useTargets';
 import { Button, Card, Field, SectionTitle, Stat, Warn, cx, inputCls } from '../components/ui';
 import { TEMI } from '../lib/theme';
+import { BackupPannello, ImpostazioniNotifichePannello } from '../components/ImpostazioniDati';
 import type { Tema } from '../lib/theme';
 
 export default function Profilo() {
@@ -34,16 +35,6 @@ export default function Profilo() {
     setTimeout(() => setSalvato(false), 1800);
   };
 
-  const esporta = () => {
-    const dati = localStorage.getItem('gymbro-v1') ?? '{}';
-    const blob = new Blob([dati], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `gymbro-backup-${new Date().toISOString().slice(0, 10)}.json`;
-    a.click();
-    URL.revokeObjectURL(url);
-  };
 
   return (
     <div>
@@ -238,11 +229,12 @@ export default function Profilo() {
         </div>
       </Card>
 
+      <ImpostazioniNotifichePannello />
+
+      <BackupPannello />
+
       <SectionTitle>Dati</SectionTitle>
       <div className="space-y-2.5">
-        <Button full variant="ghost" onClick={esporta}>
-          <Download size={15} className="mr-1.5 -mt-0.5 inline" /> Esporta backup JSON
-        </Button>
         <Button
           full
           variant="danger"
@@ -255,8 +247,7 @@ export default function Profilo() {
       </div>
 
       <p className="mt-6 text-[11px] leading-relaxed text-muted">
-        Tutti i dati restano sul tuo dispositivo (localStorage del browser o dell'app). Nessun account, nessun
-        server. Se svuoti i dati del browser, li perdi: usa il backup.
+        Tutti i dati restano sul tuo dispositivo. Nessun account, nessun server, niente esce di qui.
       </p>
       <p className="mt-3 text-[11px] leading-relaxed text-muted">
         GymBro non è un dispositivo medico e non sostituisce un medico, un dietista o un preparatore. Le

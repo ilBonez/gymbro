@@ -7,6 +7,9 @@ import { giorniTra, oggi } from '../lib/date';
 import { bmi, bmiCategoria, pesoIdealeRange, variazionePesoAttesa } from '../lib/nutrition';
 import { useTargets } from '../lib/useTargets';
 import { HealthCard } from '../components/HealthCard';
+import { VolumeMuscolare } from '../components/VolumeMuscolare';
+import { CIRCONFERENZE } from '../types';
+import { massaGrassaNavy } from '../lib/nutrition';
 import { coloreTema } from '../lib/theme';
 
 export default function Progressi() {
@@ -35,7 +38,7 @@ export default function Progressi() {
   const [data, setData] = useState(oggi());
   const [peso, setPeso] = useState(profile?.pesoKg ?? 80);
   const [bf, setBf] = useState('');
-  const [vita, setVita] = useState('');
+  const [misure, setMisure] = useState<Record<string, string>>({});
 
   const serie = useMemo(
     () => pesi.map((p) => ({ data: p.data.slice(5), peso: p.pesoKg, vita: p.vitaCm })),
@@ -67,6 +70,14 @@ export default function Progressi() {
   const cat = bmiCategoria(iBmi);
   const [minIdeale, maxIdeale] = pesoIdealeRange(profile.altezzaCm);
   const attesa = variazionePesoAttesa(targets.macro.kcal, targets.tdee);
+
+  const navy = massaGrassaNavy(
+    profile.sesso,
+    profile.altezzaCm,
+    misure.vitaCm ? +misure.vitaCm : 0,
+    misure.colloCm ? +misure.colloCm : 0,
+    misure.fianchiCm ? +misure.fianchiCm : undefined,
+  );
 
   return (
     <div>
@@ -113,6 +124,8 @@ export default function Progressi() {
       </div>
 
       <HealthCard />
+
+      <VolumeMuscolare />
 
       <SectionTitle>Andamento peso</SectionTitle>
       {serie.length < 2 ? (
@@ -196,7 +209,10 @@ export default function Progressi() {
                   <li key={p.id} className="flex items-center gap-3 px-2.5 py-2.5">
                     <span className="w-24 shrink-0 text-xs text-muted">{p.data}</span>
                     <span className="flex-1 text-sm font-semibold tabular-nums">{p.pesoKg} kg</span>
-                    {p.vitaCm && <span className="text-[11px] text-muted">vita {p.vitaCm} cm</span>}
+                    {p.vitaCm && <span className="text-[11px] text-muted">vita {p.vitaCm}</span>}
+                    {p.massaGrassaPct && (
+                      <span className="text-[11px] text-muted">{p.massaGrassaPct}% gr</span>
+                    )}
                     {d !== null && d !== 0 && (
                       <span
                         className={cx(
@@ -238,25 +254,58 @@ export default function Progressi() {
               onChange={(e) => setPeso(+e.target.value)}
             />
           </Field>
-          <div className="grid grid-cols-2 gap-3">
-            <Field label="Massa grassa % (opz.)">
-              <input type="number" step="0.1" inputMode="decimal" className={inputCls} value={bf} onChange={(e) => setBf(e.target.value)} />
-            </Field>
-            <Field label="Girovita cm (opz.)">
-              <input type="number" step="0.5" inputMode="decimal" className={inputCls} value={vita} onChange={(e) => setVita(e.target.value)} />
-            </Field>
+          <Field label="Massa grassa % (opz.)" hint="Lasciala vuota: se misuri collo e vita la stimo io.">
+            <input
+              type="number"
+              step="0.1"
+              inputMode="decimal"
+              className={inputCls}
+              value={bf}
+              onChange={(e) => setBf(e.target.value)}
+            />
+          </Field>
+
+          <div>
+            <p className="mb-2 text-xs font-medium text-soft">Circonferenze (cm, tutte opzionali)</p>
+            <div className="grid grid-cols-2 gap-2.5">
+              {CIRCONFERENZE.map((c) => (
+                <Field key={c.campo} label={c.label} hint={c.dove}>
+                  <input
+                    type="number"
+                    step="0.5"
+                    inputMode="decimal"
+                    className={cx(inputCls, 'text-center')}
+                    value={misure[c.campo] ?? ''}
+                    onChange={(e) => setMisure((m) => ({ ...m, [c.campo]: e.target.value }))}
+                  />
+                </Field>
+              ))}
+            </div>
+            {navy !== null && (
+              <p className="mt-2.5 rounded-xl bg-raise px-3 py-2 text-[11px] leading-relaxed text-soft">
+                Con collo e vita la formula della Marina americana stima{' '}
+                <b className="text-brandink">{navy}% di massa grassa</b>. Errore tipico 3-4 punti: guarda
+                come cambia nel tempo, non il valore assoluto.
+              </p>
+            )}
           </div>
           <Button
             full
             onClick={() => {
+              const num = (k: string) => (misure[k] ? +misure[k] : undefined);
               addPeso({
                 data,
                 pesoKg: peso,
-                massaGrassaPct: bf ? +bf : undefined,
-                vitaCm: vita ? +vita : undefined,
+                massaGrassaPct: bf ? +bf : (navy ?? undefined),
+                colloCm: num('colloCm'),
+                toraceCm: num('toraceCm'),
+                braccioCm: num('braccioCm'),
+                vitaCm: num('vitaCm'),
+                fianchiCm: num('fianchiCm'),
+                cosciaCm: num('cosciaCm'),
               });
               setBf('');
-              setVita('');
+              setMisure({});
               setSheet(false);
             }}
           >

@@ -1,11 +1,12 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Navigate } from 'react-router-dom';
-import { Check, ChevronDown, Music, Pause, Play, Plus, SkipForward, Square, X } from 'lucide-react';
+import { Check, ChevronDown, Music, Pause, Play, Plus, SkipForward, Square, TrendingUp, Trophy, X } from 'lucide-react';
 import { useStore } from '../store/useStore';
 import { esercizio, scheda } from '../lib/catalog';
-import { Button, Card, Sheet, cx, inputCls } from '../components/ui';
+import { Button, Card, Sheet, Tag, cx, inputCls } from '../components/ui';
 import { fmtDurata } from '../lib/date';
 import { MusicaSheet } from '../components/MusicaSheet';
+import { recordBattuti, suggerimentoCarico, ultimaEsecuzione } from '../lib/progressione';
 
 function beep(freq = 880, ms = 160) {
   try {
@@ -31,6 +32,7 @@ export default function Sessione() {
   const aggiornaSerie = useStore((s) => s.aggiornaSerie);
   const aggiungiSerie = useStore((s) => s.aggiungiSerie);
   const concludi = useStore((s) => s.concludiSessione);
+  const sessioniPassate = useStore((s) => s.sessioni);
   const annulla = useStore((s) => s.annullaSessione);
 
   const [sec, setSec] = useState(0);
@@ -87,6 +89,12 @@ export default function Sessione() {
   const volume = sessione.esercizi.reduce(
     (t, e) => t + e.serie.reduce((v, s) => v + (s.fatto ? (s.kg ?? 0) * (s.reps ?? 0) : 0), 0),
     0,
+  );
+
+  // record battuti finora in questa sessione, ricalcolati a ogni serie spuntata
+  const record = recordBattuti(
+    { ...sessione, durataSec: sec, volumeKg: Math.round(volume), completata: true },
+    sessioniPassate,
   );
 
   const termina = () => {
@@ -173,6 +181,27 @@ export default function Sessione() {
               {open && (
                 <div className="border-t border-line/60 px-4 py-3">
                   {def?.note && <p className="mb-2.5 text-xs text-brandink">{def.note}</p>}
+                  {def && (() => {
+                    const sug = suggerimentoCarico(
+                      def,
+                      ultimaEsecuzione(sessioniPassate, ex.exerciseId)?.esercizio,
+                    );
+                    return (
+                      <p
+                        className={cx(
+                          'mb-2.5 flex items-start gap-1.5 text-[11px] leading-snug',
+                          sug.verdetto === 'sali'
+                            ? 'text-brandink'
+                            : sug.verdetto === 'cala'
+                              ? 'text-carb'
+                              : 'text-muted',
+                        )}
+                      >
+                        <TrendingUp size={12} className="mt-0.5 shrink-0" />
+                        {sug.testo}
+                      </p>
+                    );
+                  })()}
                   <div className="mb-1.5 grid grid-cols-[28px_1fr_1fr_44px] gap-2 text-[10px] uppercase tracking-wide text-muted">
                     <span>#</span>
                     <span>Kg</span>
@@ -279,6 +308,24 @@ export default function Sessione() {
               </div>
             ))}
           </div>
+          {record.length > 0 && (
+            <div className="rounded-xl border border-brand-500/35 bg-brand-500/10 p-3.5">
+              <p className="flex items-center gap-1.5 text-sm font-semibold text-brandink">
+                <Trophy size={15} /> {record.length === 1 ? 'Nuovo record' : `${record.length} nuovi record`}
+              </p>
+              <ul className="mt-2 space-y-1">
+                {record.map((r) => (
+                  <li key={r.exerciseId} className="flex items-center justify-between gap-2 text-xs">
+                    <span className="min-w-0 truncate">{r.nome}</span>
+                    <Tag tone="brand">
+                      {r.kg} kg × {r.reps}
+                    </Tag>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+
           <textarea
             rows={3}
             placeholder="Note: come è andata, sensazioni, dolori…"

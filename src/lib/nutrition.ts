@@ -125,6 +125,37 @@ export function macroTargets(
   };
 }
 
+/**
+ * Massa grassa con la formula della US Navy: stima da circonferenze, con un
+ * errore tipico di 3-4 punti percentuali. Più affidabile di una stima a occhio
+ * e molto meno di una DEXA, ma soprattutto ripetibile: se misuri sempre negli
+ * stessi punti, la tendenza nel tempo è attendibile anche se il valore assoluto
+ * è approssimativo.
+ *
+ * Misure in centimetri. Per le donne servono anche i fianchi.
+ */
+export function massaGrassaNavy(
+  sesso: Sex,
+  altezzaCm: number,
+  vitaCm: number,
+  colloCm: number,
+  fianchiCm?: number,
+): number | null {
+  if (altezzaCm <= 0 || vitaCm <= 0 || colloCm <= 0) return null;
+  const log = Math.log10;
+
+  if (sesso === 'uomo') {
+    if (vitaCm <= colloCm) return null;
+    const v = 495 / (1.0324 - 0.19077 * log(vitaCm - colloCm) + 0.15456 * log(altezzaCm)) - 450;
+    return v > 2 && v < 60 ? Math.round(v * 10) / 10 : null;
+  }
+
+  if (!fianchiCm || vitaCm + fianchiCm <= colloCm) return null;
+  const v =
+    495 / (1.29579 - 0.35004 * log(vitaCm + fianchiCm - colloCm) + 0.221 * log(altezzaCm)) - 450;
+  return v > 5 && v < 65 ? Math.round(v * 10) / 10 : null;
+}
+
 export function kcalDaMacro(p: number, c: number, g: number): number {
   return Math.round(p * 4 + c * 4 + g * 9);
 }
