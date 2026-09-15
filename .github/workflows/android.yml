@@ -47,9 +47,14 @@ jobs:
       - name: Sincronizza il progetto nativo
         run: npx cap sync android
 
+      # Il bit di esecuzione e' registrato in git, ma su Windows core.filemode e'
+      # disattivato: se qualcuno ri-aggiunge il file da li' torna 100644 e sul
+      # runner Linux ./gradlew da' "Permission denied". Una riga di garanzia.
       - name: Compila l'APK di debug
         working-directory: android
-        run: ./gradlew assembleDebug --no-daemon
+        run: |
+          chmod +x ./gradlew
+          ./gradlew assembleDebug --no-daemon
 
       - uses: actions/upload-artifact@v4
         with:
