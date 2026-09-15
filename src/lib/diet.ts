@@ -156,72 +156,33 @@ export function totaliGiorno(pasti: PastoPianificato[]) {
   );
 }
 
-export interface Completamento {
-  macro: 'carboidrati' | 'proteine' | 'grassi';
-  nome: string;
-  grammi: number;
-  testo: string;
+export interface GapMacro {
+  gruppo: 'carbs' | 'proteine' | 'grassi';
+  etichetta: string;
+  mancante: number;
 }
 
 /**
- * Sceglie una fonte sensata per un macro.
- *
- * Non basta ordinare per "purezza": un limone ha quasi solo carboidrati sulle
- * sue pochissime calorie e vincerebbe sempre, salvo poi servirne mezzo chilo.
- * Prima si scartano gli alimenti troppo diluiti, poi si ordina per purezza.
+ * Di quanto il menu resta sotto i target. Riporta solo gli scarti che valgono
+ * la pena di essere colmati: sotto il 12% del target si aggiusta da sé.
  */
-const SOGLIA_PER_100G: Record<'carbs' | 'proteine' | 'grassi', number> = {
-  carbs: 25,
-  proteine: 18,
-  grassi: 30,
-};
-
-function migliorFonte(macro: 'carbs' | 'proteine' | 'grassi', categorie: string[]) {
-  const soglia = SOGLIA_PER_100G[macro];
-  // le categorie sono in ordine di preferenza: meglio proporre riso che datteri
-  for (const cat of categorie) {
-    const trovato = FOODS.filter(
-      (f) => f.categoria === cat && f[macro] >= soglia && f.unita !== 'pz',
-    )
-      .map((f) => ({ f, purezza: (f[macro] * (macro === 'grassi' ? 9 : 4)) / Math.max(f.kcal, 1) }))
-      .sort((a, b) => b.purezza - a.purezza || a.f.nome.localeCompare(b.f.nome))[0]?.f;
-    if (trovato) return trovato;
-  }
-  return undefined;
-}
-
-/**
- * Se il menu resta lontano dai target, propone quanto aggiungere di un alimento
- * semplice per chiudere il buco. Solo scarti sopra il 12%.
- */
-export function suggerimentiCompletamento(
+export function gapMacro(
   totale: { kcal: number; proteine: number; carbs: number; grassi: number },
   targets: MacroTargets,
-): Completamento[] {
-  const out: Completamento[] = [];
-
-  const casi: [Completamento['macro'], 'carbs' | 'proteine' | 'grassi', number, string[]][] = [
-    ['carboidrati', 'carbs', targets.carbs, ['cereali', 'frutta', 'legumi']],
-    ['proteine', 'proteine', targets.proteine, ['carne', 'pesce', 'latticini', 'proteine-polvere']],
-    ['grassi', 'grassi', targets.grassi, ['grassi']],
+): GapMacro[] {
+  const casi: [GapMacro['gruppo'], string, number][] = [
+    ['carbs', 'carboidrati', targets.carbs],
+    ['proteine', 'proteine', targets.proteine],
+    ['grassi', 'grassi', targets.grassi],
   ];
 
-  for (const [etichetta, campo, target, categorie] of casi) {
-    const mancante = target - totale[campo];
-    if (mancante < target * 0.12 || mancante < 8) continue;
-    const fonte = migliorFonte(campo, categorie);
-    if (!fonte || fonte[campo] <= 0) continue;
-    const grammi = Math.round((mancante / fonte[campo]) * 100);
-    if (grammi < 10 || grammi > 600) continue;
-    out.push({
-      macro: etichetta,
-      nome: fonte.nome,
-      grammi,
-      testo: `mancano ${Math.round(mancante)} g di ${etichetta}: circa ${grammi} ${fonte.unita} di ${fonte.nome.toLowerCase()}`,
-    });
-  }
-
-  return out;
+  return casi
+    .map(([gruppo, etichetta, target]) => ({
+      gruppo,
+      etichetta,
+      mancante: Math.round(target - totale[gruppo]),
+    }))
+    .filter((g) => g.mancante >= 8 && g.mancante >= (g.gruppo === 'grassi' ? 8 : 12));
 }
 
 export interface VoceSpesa {

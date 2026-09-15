@@ -45,7 +45,7 @@ tutti gli effetti e continua a funzionare offline.
 | **Allena** | 4 programmi (definizione low carb, forza, massa, mantenimento), 16 schede, 86 esercizi con esecuzione ed errori comuni |
 | **Sessione** | Timer, log di serie/carico/ripetizioni, timer di recupero con beep, playlist Spotify |
 | **Piano** | Calendario: stendi un programma su più settimane (anche solo lun-ven), calorie e passi giorno per giorno |
-| **Dieta** | Menu generato sui tuoi macro da 54 ricette, diario pasti (anche a mano o "sgarro"), ricettario |
+| **Dieta** | Menu generato sui tuoi macro da 54 ricette, diario pasti (anche a mano o "sgarro"), ricettario, tabella sostituzioni |
 | **Spesa** | Lista dei 7 giorni raggruppata per reparto, con link di ricerca Eurospin |
 | **Progressi** | Peso, girovita, BMI, volume settimanale, anelli di movimento/passi/sonno da Health Connect |
 
@@ -57,6 +57,12 @@ Ogni programma mostra anche quante calorie costa una seduta e che variazione di 
 settimana: sono stime con un margine del 20-30%, utili per confrontare un blocco con l'altro.
 
 I prezzi degli alimenti sono **indicativi**: cambiano da un punto vendita all'altro.
+
+**Sostituzioni:** la scheda Dieta calcola le porzioni equivalenti — 80 g di pasta = 70 g di riso = 100 g
+di pane = 360 g di patate = 150 g di gnocchi — partendo dalle
+[tabelle CREA 2019](https://www.alimenti-nutrizione.it/), non dai rapporti tradizionali, che con i dati
+aggiornati non tornano più (la regola "80 g di pasta = 300 g di patate" sottostima del 17%). Ogni
+porzione mostra anche il peso da cotto e la differenza di calorie.
 
 Il tema si sceglie dal profilo: chiaro, scuro o automatico.
 

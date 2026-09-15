@@ -4,24 +4,27 @@ import { Check, ChevronRight, Clock, PartyPopper, Pill, Plus, RefreshCw, Search,
 import { RECIPES } from '../data/recipes';
 import { useStore } from '../store/useStore';
 import { useTargets } from '../lib/useTargets';
-import { MOMENTO_LABEL, generaGiornoDieta, listaSpesaDaPasti, fmtQta, totaliGiorno, suggerimentiCompletamento } from '../lib/diet';
+import { MOMENTO_LABEL, gapMacro, generaGiornoDieta, listaSpesaDaPasti, fmtQta, totaliGiorno } from '../lib/diet';
+import { ETICHETTA_STATO, equivalenti } from '../lib/equivalenze';
 import { MacroBlock } from '../components/MacroRow';
 import { Button, Card, Chip, SectionTitle, Tag, cx, inputCls } from '../components/ui';
 import { AggiungiPasto } from '../components/AggiungiPasto';
+import { Sostituzioni } from '../components/Sostituzioni';
 import { key, oggi } from '../lib/date';
 import { GOAL_RULES } from '../lib/nutrition';
 import { addDays } from 'date-fns';
 
 export default function Dieta() {
-  const [tab, setTab] = useState<'oggi' | 'ricette'>('oggi');
+  const [tab, setTab] = useState<'oggi' | 'ricette' | 'sostituzioni'>('oggi');
   return (
     <div>
       <h1 className="text-2xl font-bold tracking-tight">Dieta</h1>
-      <div className="mt-3 flex gap-2">
+      <div className="-mx-4 mt-3 flex gap-2 overflow-x-auto px-4 pb-1">
         <Chip active={tab === 'oggi'} onClick={() => setTab('oggi')}>Menu di oggi</Chip>
         <Chip active={tab === 'ricette'} onClick={() => setTab('ricette')}>Ricette</Chip>
+        <Chip active={tab === 'sostituzioni'} onClick={() => setTab('sostituzioni')}>Sostituzioni</Chip>
       </div>
-      {tab === 'oggi' ? <MenuOggi /> : <Ricettario />}
+      {tab === 'oggi' ? <MenuOggi /> : tab === 'ricette' ? <Ricettario /> : <Sostituzioni />}
     </div>
   );
 }
@@ -51,7 +54,7 @@ function MenuOggi() {
   const kcalSgarro = pasti
     .filter((p) => p.data === today && p.tipo === 'sgarro')
     .reduce((t, p) => t + p.kcal, 0);
-  const completamenti = suggerimentiCompletamento(totale, targets.macro);
+  const gap = gapMacro(totale, targets.macro);
   const pastiOggi = pasti.filter((p) => p.data === today);
   const consumati = pastiOggi.reduce(
     (t, p) => ({
@@ -189,14 +192,34 @@ function MenuOggi() {
             </div>
           ))}
         </div>
-        {completamenti.length > 0 ? (
-          <div className="mt-3 space-y-1.5 border-t border-line/60 pt-3">
+        {gap.length > 0 ? (
+          <div className="mt-3 space-y-3 border-t border-line/60 pt-3">
             <p className="text-[11px] font-semibold text-soft">Per chiudere i macro</p>
-            {completamenti.map((c) => (
-              <p key={c.macro} className="text-[11px] leading-snug text-muted">
-                · {c.testo}
-              </p>
-            ))}
+            {gap.map((g) => {
+              const opzioni = equivalenti(g.gruppo, g.mancante, { max: 4 });
+              return (
+                <div key={g.gruppo}>
+                  <p className="text-[11px] text-muted">
+                    Mancano <b className="text-ink">{g.mancante} g</b> di {g.etichetta}. Una qualsiasi di
+                    queste porzioni li copre:
+                  </p>
+                  {opzioni.length > 0 && (
+                    <div className="mt-1.5 flex flex-wrap gap-1.5">
+                      {opzioni.map((o, i) => (
+                        <span
+                          key={o.alimento.id}
+                          className="rounded-lg border border-line bg-raise px-2 py-1 text-[11px]"
+                        >
+                          {i > 0 && <span className="mr-1 text-muted">oppure</span>}
+                          <b className="tabular-nums">{o.grammi} g</b> {o.alimento.nome.toLowerCase()}{' '}
+                          <span className="text-muted">({ETICHETTA_STATO[o.alimento.stato]})</span>
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
           </div>
         ) : (
           <p className="mt-2 text-[11px] text-muted">
