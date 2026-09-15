@@ -1,12 +1,13 @@
 import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Check, ChevronRight, Clock, Pill, Plus, RefreshCw, Search, ShoppingCart } from 'lucide-react';
+import { Check, ChevronRight, Clock, PartyPopper, Pill, Plus, RefreshCw, Search, ShoppingCart, Trash2 } from 'lucide-react';
 import { RECIPES } from '../data/recipes';
 import { useStore } from '../store/useStore';
 import { useTargets } from '../lib/useTargets';
 import { MOMENTO_LABEL, generaGiornoDieta, listaSpesaDaPasti, fmtQta, totaliGiorno, suggerimentiCompletamento } from '../lib/diet';
 import { MacroBlock } from '../components/MacroRow';
 import { Button, Card, Chip, SectionTitle, Tag, cx, inputCls } from '../components/ui';
+import { AggiungiPasto } from '../components/AggiungiPasto';
 import { key, oggi } from '../lib/date';
 import { GOAL_RULES } from '../lib/nutrition';
 import { addDays } from 'date-fns';
@@ -36,6 +37,7 @@ function MenuOggi() {
   const allenamentoOggi = !!piano[today]?.workoutId;
   const targets = useTargets(allenamentoOggi);
   const [msg, setMsg] = useState('');
+  const [aggiungi, setAggiungi] = useState(false);
 
   const menu = useMemo(
     () => (targets ? generaGiornoDieta(today, targets.goal, targets.macro, allenamentoOggi) : []),
@@ -45,6 +47,10 @@ function MenuOggi() {
   if (!targets) return null;
 
   const totale = totaliGiorno(menu);
+  const sgarriOggi = pasti.filter((p) => p.data === today && p.tipo === 'sgarro').length;
+  const kcalSgarro = pasti
+    .filter((p) => p.data === today && p.tipo === 'sgarro')
+    .reduce((t, p) => t + p.kcal, 0);
   const completamenti = suggerimentiCompletamento(totale, targets.macro);
   const pastiOggi = pasti.filter((p) => p.data === today);
   const consumati = pastiOggi.reduce(
@@ -84,7 +90,7 @@ function MenuOggi() {
       <Card>
         <div className="mb-3 flex items-center justify-between">
           <Tag tone="brand">{GOAL_RULES[targets.goal].label}</Tag>
-          <span className="text-[11px] text-ink-400">
+          <span className="text-[11px] text-muted">
             {allenamentoOggi ? 'Giorno di allenamento' : 'Giorno di riposo'}
           </span>
         </div>
@@ -98,14 +104,14 @@ function MenuOggi() {
           tCarbs={targets.macro.carbs}
           tGrassi={targets.macro.grassi}
         />
-        <p className="mt-3 text-[11px] text-ink-400">
+        <p className="mt-3 text-[11px] text-muted">
           Obiettivo acqua: {targets.macro.acquaLitri} l · fibre {targets.macro.fibre} g
         </p>
       </Card>
 
       <SectionTitle
         action={
-          <Link to="/integratori" className="inline-flex items-center gap-1 text-xs text-brand-400">
+          <Link to="/integratori" className="inline-flex items-center gap-1 text-xs text-brandink">
             <Pill size={12} /> Integratori
           </Link>
         }
@@ -121,7 +127,7 @@ function MenuOggi() {
               <div className="flex items-start gap-3 p-3.5">
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2">
-                    <span className="text-[10px] font-bold uppercase tracking-wider text-brand-400">
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-brandink">
                       {MOMENTO_LABEL[p.momento]}
                     </span>
                     {p.porzioni !== 1 && <Tag>×{p.porzioni}</Tag>}
@@ -129,7 +135,7 @@ function MenuOggi() {
                   <Link to={`/dieta/ricetta/${p.recipe.id}`} className="mt-1 block">
                     <h3 className="text-sm font-semibold leading-snug">{p.recipe.nome}</h3>
                   </Link>
-                  <p className="mt-1 text-[11px] tabular-nums text-ink-400">
+                  <p className="mt-1 text-[11px] tabular-nums text-muted">
                     {p.kcal} kcal · P {p.proteine} · C {p.carbs} · G {p.grassi}
                     <span className="ml-2 inline-flex items-center gap-1">
                       <Clock size={10} /> {p.recipe.tempoMin}′
@@ -154,7 +160,7 @@ function MenuOggi() {
                   }
                   className={cx(
                     'grid h-9 w-9 shrink-0 place-items-center rounded-xl border transition-colors',
-                    registrato ? 'border-brand-500 bg-brand-500 text-ink-950' : 'border-ink-600 text-ink-400',
+                    registrato ? 'border-brand-500 bg-brand-500 text-onbrand' : 'border-line2 text-muted',
                   )}
                   aria-label={registrato ? 'Rimuovi dal diario' : 'Segna come mangiato'}
                 >
@@ -167,7 +173,7 @@ function MenuOggi() {
       </div>
 
       <Card className="mt-3 !py-3">
-        <p className="text-[11px] uppercase tracking-wide text-ink-400">Totale del menu suggerito</p>
+        <p className="text-[11px] uppercase tracking-wide text-muted">Totale del menu suggerito</p>
         <div className="mt-2 grid grid-cols-4 gap-2 text-center">
           {[
             ['kcal', totale.kcal, targets.macro.kcal],
@@ -175,40 +181,96 @@ function MenuOggi() {
             ['Carb', totale.carbs, targets.macro.carbs],
             ['Gras', totale.grassi, targets.macro.grassi],
           ].map(([k, v, t]) => (
-            <div key={k as string} className="rounded-xl bg-ink-800 py-2">
+            <div key={k as string} className="rounded-xl bg-raise py-2">
               <p className="text-sm font-bold tabular-nums">{v}</p>
-              <p className="text-[10px] text-ink-400">
+              <p className="text-[10px] text-muted">
                 {k} · obiettivo {t}
               </p>
             </div>
           ))}
         </div>
         {completamenti.length > 0 ? (
-          <div className="mt-3 space-y-1.5 border-t border-ink-700/60 pt-3">
-            <p className="text-[11px] font-semibold text-ink-300">Per chiudere i macro</p>
+          <div className="mt-3 space-y-1.5 border-t border-line/60 pt-3">
+            <p className="text-[11px] font-semibold text-soft">Per chiudere i macro</p>
             {completamenti.map((c) => (
-              <p key={c.macro} className="text-[11px] leading-snug text-ink-400">
+              <p key={c.macro} className="text-[11px] leading-snug text-muted">
                 · {c.testo}
               </p>
             ))}
           </div>
         ) : (
-          <p className="mt-2 text-[11px] text-ink-400">
+          <p className="mt-2 text-[11px] text-muted">
             Il menu copre i target: aggiusta le porzioni di 20-30 g e resti dentro il margine.
           </p>
         )}
       </Card>
 
+      <SectionTitle
+        action={
+          <button onClick={() => setAggiungi(true)} className="text-xs text-brandink">
+            <Plus size={12} className="mr-0.5 -mt-0.5 inline" /> Aggiungi
+          </button>
+        }
+      >
+        Diario di oggi
+      </SectionTitle>
+      {pastiOggi.length === 0 ? (
+        <Card>
+          <p className="text-xs leading-relaxed text-muted">
+            Niente registrato. Spunta i pasti del menu qui sopra, oppure{' '}
+            <button onClick={() => setAggiungi(true)} className="text-brandink underline">
+              aggiungine uno a mano
+            </button>{' '}
+            se hai mangiato altro.
+          </p>
+        </Card>
+      ) : (
+        <Card className="!p-1.5">
+          <ul className="divide-y divide-line/60">
+            {pastiOggi.map((p) => (
+              <li key={p.id} className="flex items-center gap-2.5 px-2 py-2.5">
+                <div className="min-w-0 flex-1">
+                  <p className="flex items-center gap-1.5 truncate text-sm font-medium">
+                    {p.tipo === 'sgarro' && <PartyPopper size={12} className="shrink-0 text-carb" />}
+                    {p.nome}
+                  </p>
+                  <p className="text-[11px] tabular-nums text-muted">
+                    {MOMENTO_LABEL[p.momento]} · {p.kcal} kcal · P {p.proteine} · C {p.carbs} · G {p.grassi}
+                  </p>
+                </div>
+                <button
+                  onClick={() => removePasto(p.id)}
+                  className="shrink-0 rounded-lg p-1.5 text-muted hover:text-red-500"
+                  aria-label="Rimuovi dal diario"
+                >
+                  <Trash2 size={13} />
+                </button>
+              </li>
+            ))}
+          </ul>
+          {sgarriOggi > 0 && (
+            <p className="px-2.5 pb-1.5 pt-2 text-[11px] text-carb">
+              {sgarriOggi === 1 ? 'Uno sgarro' : `${sgarriOggi} sgarri`} oggi, {kcalSgarro} kcal in tutto.
+              {kcalSgarro > targets.macro.kcal * 0.4
+                ? ' Domani non serve digiunare: torna semplicemente al piano.'
+                : ' Rientra senza problemi nella settimana.'}
+            </p>
+          )}
+        </Card>
+      )}
+
       <div className="mt-5 space-y-2">
         <Button full variant="ghost" onClick={generaSpesa}>
           <ShoppingCart size={15} className="mr-1.5 -mt-0.5 inline" /> Genera lista spesa (7 giorni)
         </Button>
-        {msg && <p className="text-center text-xs text-brand-400">{msg}</p>}
-        <p className="text-center text-[11px] text-ink-400">
+        {msg && <p className="text-center text-xs text-brandink">{msg}</p>}
+        <p className="text-center text-[11px] text-muted">
           <RefreshCw size={10} className="mr-1 -mt-0.5 inline" />
           Il menu cambia ogni giorno ma resta stabile durante la giornata.
         </p>
       </div>
+
+      <AggiungiPasto open={aggiungi} onClose={() => setAggiungi(false)} data={today} />
     </div>
   );
 }
@@ -230,7 +292,7 @@ function Ricettario() {
   return (
     <div>
       <div className="relative mt-4">
-        <Search size={16} className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-ink-400" />
+        <Search size={16} className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-muted" />
         <input
           value={q}
           onChange={(e) => setQ(e.target.value)}
@@ -248,7 +310,7 @@ function Ricettario() {
         ))}
       </div>
 
-      <p className="mt-4 text-xs text-ink-400">{risultati.length} ricette</p>
+      <p className="mt-4 text-xs text-muted">{risultati.length} ricette</p>
 
       <div className="mt-2 space-y-2">
         {risultati.map((r) => (
@@ -257,7 +319,7 @@ function Ricettario() {
               <div className="flex items-center gap-3">
                 <div className="min-w-0 flex-1">
                   <h3 className="truncate text-sm font-semibold">{r.nome}</h3>
-                  <p className="mt-0.5 text-[11px] tabular-nums text-ink-400">
+                  <p className="mt-0.5 text-[11px] tabular-nums text-muted">
                     {r.macro.kcal} kcal · P {r.macro.proteine} · C {r.macro.carbs} · G {r.macro.grassi} ·{' '}
                     {r.tempoMin}′
                   </p>
@@ -270,7 +332,7 @@ function Ricettario() {
                     ))}
                   </div>
                 </div>
-                <ChevronRight size={16} className="shrink-0 text-ink-400" />
+                <ChevronRight size={16} className="shrink-0 text-muted" />
               </div>
             </Card>
           </Link>

@@ -18,7 +18,7 @@ export default function Integratori() {
   return (
     <div>
       <h1 className="text-2xl font-bold tracking-tight">Integratori</h1>
-      <p className="mt-1 text-sm text-ink-400">
+      <p className="mt-1 text-sm text-muted">
         Attiva quelli che usi: compaiono nella checklist della home, ordinati per momento della giornata.
       </p>
 
@@ -48,7 +48,7 @@ export default function Integratori() {
                         onClick={() => toggle(s.id)}
                         className={cx(
                           'mt-0.5 grid h-6 w-6 shrink-0 place-items-center rounded-md border transition-colors',
-                          on ? 'border-brand-500 bg-brand-500 text-ink-950' : 'border-ink-600',
+                          on ? 'border-brand-500 bg-brand-500 text-onbrand' : 'border-line2',
                         )}
                         aria-label={on ? 'Disattiva' : 'Attiva'}
                       >
@@ -64,9 +64,9 @@ export default function Integratori() {
                           {consigliato && !on && <Tag tone="brand">adatto al tuo obiettivo</Tag>}
                         </div>
 
-                        <p className="mt-1.5 text-sm font-medium text-brand-300">{s.dose}</p>
-                        <p className="mt-0.5 text-xs text-ink-300">{s.quando}</p>
-                        <p className="mt-2 text-xs leading-relaxed text-ink-400">{s.perche}</p>
+                        <p className="mt-1.5 text-sm font-medium text-brandink">{s.dose}</p>
+                        <p className="mt-0.5 text-xs text-soft">{s.quando}</p>
+                        <p className="mt-2 text-xs leading-relaxed text-muted">{s.perche}</p>
 
                         {s.attenzioni && (
                           <ul className="mt-2.5 space-y-1">
@@ -84,7 +84,7 @@ export default function Integratori() {
                             onClick={() => segna(today, s.id, !preso)}
                             className={cx(
                               'mt-3 rounded-lg px-3 py-1.5 text-xs font-medium',
-                              preso ? 'bg-brand-500 text-ink-950' : 'bg-ink-800 text-ink-300',
+                              preso ? 'bg-brand-500 text-onbrand' : 'bg-raise text-soft',
                             )}
                           >
                             {preso ? 'Preso oggi ✓' : 'Segna come preso oggi'}
@@ -100,7 +100,7 @@ export default function Integratori() {
         );
       })}
 
-      <p className="mt-6 text-[11px] leading-relaxed text-ink-400">
+      <p className="mt-6 text-[11px] leading-relaxed text-muted">
         Fonti dei dosaggi: linee guida ISSN e EFSA per caffeina, creatina e proteine. I valori indicati sono
         riferimenti per adulti sani.
       </p>

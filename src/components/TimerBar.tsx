@@ -25,14 +25,14 @@ export function TimerBar() {
       className="fixed bottom-[68px] inset-x-0 z-30 mx-auto max-w-2xl px-4 safe-bottom"
     >
       <div className="flex items-center gap-3 rounded-2xl border border-brand-500/40 bg-brand-500/12 px-4 py-3 backdrop-blur-lg">
-        <span className="grid h-8 w-8 place-items-center rounded-full bg-brand-500 text-ink-950 animate-ring">
+        <span className="grid h-8 w-8 place-items-center rounded-full bg-brand-500 text-onbrand animate-ring">
           <Activity size={16} strokeWidth={2.6} />
         </span>
         <div className="min-w-0 flex-1">
-          <p className="truncate text-sm font-semibold text-brand-300">Allenamento in corso</p>
-          <p className="text-xs text-ink-300">Tocca per riprendere</p>
+          <p className="truncate text-sm font-semibold text-brandink">Allenamento in corso</p>
+          <p className="text-xs text-soft">Tocca per riprendere</p>
         </div>
-        <span className="tabular-nums text-lg font-bold text-brand-300">{fmtDurata(sec)}</span>
+        <span className="tabular-nums text-lg font-bold text-brandink">{fmtDurata(sec)}</span>
       </div>
     </Link>
   );

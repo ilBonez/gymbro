@@ -7,6 +7,7 @@ import { giorniTra, oggi } from '../lib/date';
 import { bmi, bmiCategoria, pesoIdealeRange, variazionePesoAttesa } from '../lib/nutrition';
 import { useTargets } from '../lib/useTargets';
 import { HealthCard } from '../components/HealthCard';
+import { coloreTema } from '../lib/theme';
 
 export default function Progressi() {
   const profile = useStore((s) => s.profile);
@@ -15,6 +16,20 @@ export default function Progressi() {
   const removePeso = useStore((s) => s.removePeso);
   const sessioni = useStore((s) => s.sessioni);
   const targets = useTargets(true);
+
+  const tema = useStore((s) => s.tema);
+  // i grafici vogliono colori concreti, non variabili CSS: li rileggiamo a ogni cambio tema
+  const colori = useMemo(
+    () => ({
+      griglia: coloreTema('line', '#e5e7eb'),
+      testo: coloreTema('muted', '#6b7280'),
+      superficie: coloreTema('surface', '#ffffff'),
+      bordo: coloreTema('line2', '#d1d5db'),
+      brand: coloreTema('brand-500', '#f97316'),
+      accento: coloreTema('prot', '#0284c7'),
+    }),
+    [tema],
+  );
 
   const [sheet, setSheet] = useState(false);
   const [data, setData] = useState(oggi());
@@ -58,7 +73,7 @@ export default function Progressi() {
       <div className="flex items-start justify-between gap-3">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Progressi</h1>
-          <p className="mt-1 text-sm text-ink-400">Peso, misure e volume di allenamento.</p>
+          <p className="mt-1 text-sm text-muted">Peso, misure e volume di allenamento.</p>
         </div>
         <Button onClick={() => setSheet(true)} className="shrink-0">
           <Plus size={15} className="mr-1 -mt-0.5 inline" /> Pesati
@@ -72,7 +87,7 @@ export default function Progressi() {
           unit="kg"
           sub={
             totale !== 0 ? (
-              <span className={totale < 0 ? 'text-brand-400' : 'text-carb'}>
+              <span className={totale < 0 ? 'text-brandink' : 'text-carb'}>
                 {totale > 0 ? '+' : ''}
                 {totale} kg dall'inizio
               </span>
@@ -85,7 +100,7 @@ export default function Progressi() {
           label="Ultimi 7 giorni"
           value={delta7 === null ? '—' : `${delta7 > 0 ? '+' : ''}${delta7}`}
           unit={delta7 === null ? '' : 'kg'}
-          tone={delta7 === null ? '' : delta7 < 0 ? 'text-brand-400' : delta7 > 0 ? 'text-carb' : ''}
+          tone={delta7 === null ? '' : delta7 < 0 ? 'text-brandink' : delta7 > 0 ? 'text-carb' : ''}
           sub={`Atteso ${attesa > 0 ? '+' : ''}${attesa} kg/sett`}
         />
         <Stat label="BMI" value={iBmi} tone={cat.color} sub={cat.label} />
@@ -111,30 +126,31 @@ export default function Progressi() {
         <Card className="!px-1 !py-3">
           <ResponsiveContainer width="100%" height={210}>
             <LineChart data={serie} margin={{ top: 6, right: 14, left: -18, bottom: 0 }}>
-              <CartesianGrid stroke="#1f2833" vertical={false} />
-              <XAxis dataKey="data" tick={{ fill: '#6b7a8d', fontSize: 11 }} axisLine={false} tickLine={false} />
+              <CartesianGrid stroke={colori.griglia} vertical={false} />
+              <XAxis dataKey="data" tick={{ fill: colori.testo, fontSize: 11 }} axisLine={false} tickLine={false} />
               <YAxis
                 domain={['dataMin - 1', 'dataMax + 1']}
-                tick={{ fill: '#6b7a8d', fontSize: 11 }}
+                tick={{ fill: colori.testo, fontSize: 11 }}
                 axisLine={false}
                 tickLine={false}
                 width={44}
               />
               <Tooltip
                 contentStyle={{
-                  background: '#11161d',
-                  border: '1px solid #2b3644',
+                  background: colori.superficie,
+                  border: `1px solid ${colori.bordo}`,
+                  color: coloreTema('ink', '#111827'),
                   borderRadius: 12,
                   fontSize: 12,
                 }}
-                labelStyle={{ color: '#93a1b2' }}
+                labelStyle={{ color: colori.testo }}
               />
               <Line
                 type="monotone"
                 dataKey="peso"
-                stroke="#14c76a"
+                stroke={colori.brand}
                 strokeWidth={2.5}
-                dot={{ r: 2.5, fill: '#14c76a' }}
+                dot={{ r: 2.5, fill: colori.brand }}
                 activeDot={{ r: 5 }}
                 name="Peso (kg)"
               />
@@ -149,18 +165,19 @@ export default function Progressi() {
           <Card className="!px-1 !py-3">
             <ResponsiveContainer width="100%" height={170}>
               <LineChart data={volumeSettimane} margin={{ top: 6, right: 14, left: -18, bottom: 0 }}>
-                <CartesianGrid stroke="#1f2833" vertical={false} />
-                <XAxis dataKey="data" tick={{ fill: '#6b7a8d', fontSize: 11 }} axisLine={false} tickLine={false} />
-                <YAxis tick={{ fill: '#6b7a8d', fontSize: 11 }} axisLine={false} tickLine={false} width={44} />
+                <CartesianGrid stroke={colori.griglia} vertical={false} />
+                <XAxis dataKey="data" tick={{ fill: colori.testo, fontSize: 11 }} axisLine={false} tickLine={false} />
+                <YAxis tick={{ fill: colori.testo, fontSize: 11 }} axisLine={false} tickLine={false} width={44} />
                 <Tooltip
                   contentStyle={{
-                    background: '#11161d',
-                    border: '1px solid #2b3644',
+                    background: colori.superficie,
+                    border: `1px solid ${colori.bordo}`,
+                    color: coloreTema('ink', '#111827'),
                     borderRadius: 12,
                     fontSize: 12,
                   }}
                 />
-                <Line type="monotone" dataKey="volume" stroke="#f5a524" strokeWidth={2.5} dot={false} name="Volume" />
+                <Line type="monotone" dataKey="volume" stroke={colori.accento} strokeWidth={2.5} dot={false} name="Volume" />
               </LineChart>
             </ResponsiveContainer>
           </Card>
@@ -171,20 +188,20 @@ export default function Progressi() {
         <>
           <SectionTitle>Registro pesate</SectionTitle>
           <Card className="!p-1.5">
-            <ul className="divide-y divide-ink-700/50">
+            <ul className="divide-y divide-line/50">
               {[...pesi].reverse().map((p, i, arr) => {
                 const prec = arr[i + 1];
                 const d = prec ? +(p.pesoKg - prec.pesoKg).toFixed(1) : null;
                 return (
                   <li key={p.id} className="flex items-center gap-3 px-2.5 py-2.5">
-                    <span className="w-24 shrink-0 text-xs text-ink-400">{p.data}</span>
+                    <span className="w-24 shrink-0 text-xs text-muted">{p.data}</span>
                     <span className="flex-1 text-sm font-semibold tabular-nums">{p.pesoKg} kg</span>
-                    {p.vitaCm && <span className="text-[11px] text-ink-400">vita {p.vitaCm} cm</span>}
+                    {p.vitaCm && <span className="text-[11px] text-muted">vita {p.vitaCm} cm</span>}
                     {d !== null && d !== 0 && (
                       <span
                         className={cx(
                           'inline-flex items-center gap-0.5 text-[11px] tabular-nums',
-                          d < 0 ? 'text-brand-400' : 'text-carb',
+                          d < 0 ? 'text-brandink' : 'text-carb',
                         )}
                       >
                         {d < 0 ? <TrendingDown size={11} /> : <TrendingUp size={11} />}
@@ -193,7 +210,7 @@ export default function Progressi() {
                     )}
                     <button
                       onClick={() => removePeso(p.id)}
-                      className="shrink-0 rounded-lg p-1.5 text-ink-400 hover:text-red-300"
+                      className="shrink-0 rounded-lg p-1.5 text-muted hover:text-red-300"
                       aria-label="Elimina"
                     >
                       <Trash2 size={13} />
@@ -245,7 +262,7 @@ export default function Progressi() {
           >
             Salva
           </Button>
-          <p className="text-[11px] text-ink-400">
+          <p className="text-[11px] text-muted">
             Il peso oscilla di 1-2 kg al giorno per acqua, sale e glicogeno: guarda la tendenza su 2-3 settimane,
             non il singolo numero.
           </p>

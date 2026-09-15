@@ -13,6 +13,7 @@ import { PROGRAMS } from '../data/programs';
 import type { Meal } from '../data/recipes';
 import { key } from '../lib/date';
 import { STACK_MATTINA_PRESTO } from '../data/supplements';
+import type { Tema } from '../lib/theme';
 
 export interface StatoSync {
   collegato: boolean;
@@ -33,6 +34,29 @@ export interface MealEntry {
   proteine: number;
   carbs: number;
   grassi: number;
+  /** 'sgarro' = pasto fuori piano, contato ma segnalato a parte. */
+  tipo?: 'normale' | 'sgarro';
+}
+
+/** Riepilogo di una giornata letto da Health Connect e messo da parte. */
+export interface GiornoSalute {
+  data: string;            // yyyy-MM-dd
+  passi: number;
+  kcalAttive: number;      // misurate; 0 se il telefono non le registra
+  kcalStimateDaPassi: number;
+  sonnoMin: number;
+  kcalAllenamento: number; // da sessioni di esercizio registrate su Health Connect
+}
+
+export interface ObiettiviAttivita {
+  kcal: number;
+  passi: number;
+  sonnoOre: number;
+}
+
+export interface Playlist {
+  nome: string;
+  url: string;
 }
 
 interface State {
@@ -48,6 +72,11 @@ interface State {
   preferiti: string[];
   onboardingFatto: boolean;
   health: StatoSync;
+  giorniSalute: Record<string, GiornoSalute>;
+  obiettiviAttivita: ObiettiviAttivita;
+  /** playlist Spotify: chiave = id della scheda, oppure 'default' */
+  playlist: Record<string, Playlist>;
+  tema: Tema;
 
   setProfile: (p: Profile) => void;
   aggiornaProfilo: (patch: Partial<Profile>) => void;
@@ -59,7 +88,12 @@ interface State {
 
   setGiorno: (d: PlanDay) => void;
   svuotaGiorno: (data: string) => void;
-  applicaProgramma: (programId: string, dataInizio: string, settimane: number) => void;
+  applicaProgramma: (
+    programId: string,
+    dataInizio: string,
+    settimane: number,
+    soloFeriali?: boolean,
+  ) => void;
   svuotaPiano: () => void;
 
   iniziaSessione: (programId: string, workoutId: string, esercizi: LoggedExercise[]) => void;
@@ -87,6 +121,10 @@ interface State {
 
   togglePreferito: (exerciseId: string) => void;
   setHealth: (patch: Partial<StatoSync>) => void;
+  setGiorniSalute: (giorni: GiornoSalute[]) => void;
+  setObiettiviAttivita: (patch: Partial<ObiettiviAttivita>) => void;
+  setPlaylist: (chiave: string, p: Playlist | null) => void;
+  setTema: (t: Tema) => void;
 }
 
 const uid = () => Math.random().toString(36).slice(2, 10);
@@ -112,6 +150,10 @@ export const useStore = create<State>()(
         kcalAttiveMedie: null,
         fcRiposo: null,
       },
+      giorniSalute: {},
+      obiettiviAttivita: { kcal: 500, passi: 9000, sonnoOre: 7.5 },
+      playlist: {},
+      tema: 'sistema',
 
       setProfile: (p) =>
         set((s) => ({
@@ -139,6 +181,7 @@ export const useStore = create<State>()(
           logIntegratori: {},
           preferiti: [],
           onboardingFatto: false,
+          giorniSalute: {},
           health: {
             collegato: false,
             ultimaSync: null,
@@ -171,11 +214,15 @@ export const useStore = create<State>()(
           return { piano };
         }),
 
-      applicaProgramma: (programId, dataInizio, settimane) => {
+      applicaProgramma: (programId, dataInizio, settimane, soloFeriali = false) => {
         const prog = PROGRAMS.find((p) => p.id === programId);
         if (!prog) return;
         const piano = { ...get().piano };
         const start = new Date(dataInizio + 'T00:00:00');
+
+        const settimanaTipo = soloFeriali
+          ? compattaInFeriali(prog.splitSuggerito, prog.workouts)
+          : prog.splitSuggerito;
 
         // quante volte una stessa etichetta e' gia' stata usata: serve a ruotare
         // fra piu' schede che iniziano allo stesso modo (Push A / Push B)
@@ -183,9 +230,9 @@ export const useStore = create<State>()(
 
         for (let g = 0; g < settimane * 7; g++) {
           const d = addDays(start, g);
-          // splitSuggerito e' indicizzato per giorno della settimana: 0 = lunedi
+          // la settimana tipo e' indicizzata per giorno: 0 = lunedi
           const indiceSettimana = (d.getDay() + 6) % 7;
-          const etichetta = prog.splitSuggerito[indiceSettimana] ?? 'Riposo';
+          const etichetta = settimanaTipo[indiceSettimana] ?? 'Riposo';
           const lab = normalizza(etichetta);
 
           const candidati = prog.workouts.filter((x) => {
@@ -201,14 +248,14 @@ export const useStore = create<State>()(
           }
 
           // un'etichetta di solo cardio o riposo non deve mai ricevere una scheda pesi
-          const senzaPesi = !match && /ripos|cardio|liss|hiit|camminat|recuper/i.test(etichetta);
+          const senzaPesi = !match && RIPOSO_O_CARDIO.test(etichetta);
 
           piano[key(d)] = {
             data: key(d),
             programId,
             workoutId: match?.id ?? null,
             cardio:
-              !match && prog.cardio && /cardio|liss|hiit|camminat/i.test(etichetta)
+              !match && prog.cardio && SOLO_CARDIO.test(etichetta)
                 ? { tipo: prog.cardio.tipo, durataMin: prog.cardio.durataMin }
                 : null,
             note: !match && !senzaPesi ? etichetta : undefined,
@@ -337,10 +384,78 @@ export const useStore = create<State>()(
         })),
 
       setHealth: (patch) => set((s) => ({ health: { ...s.health, ...patch } })),
+
+      setGiorniSalute: (giorni) =>
+        set((s) => {
+          const mappa = { ...s.giorniSalute };
+          for (const g of giorni) mappa[g.data] = g;
+          return { giorniSalute: mappa };
+        }),
+
+      setObiettiviAttivita: (patch) =>
+        set((s) => ({ obiettiviAttivita: { ...s.obiettiviAttivita, ...patch } })),
+
+      setPlaylist: (chiave, p) =>
+        set((s) => {
+          const playlist = { ...s.playlist };
+          if (p) playlist[chiave] = p;
+          else delete playlist[chiave];
+          return { playlist };
+        }),
+
+      setTema: (t) => set({ tema: t }),
     }),
     { name: 'gymbro-v1' },
   ),
 );
+
+const RIPOSO_O_CARDIO = /ripos|cardio|liss|hiit|camminat|recuper/i;
+const SOLO_CARDIO = /cardio|liss|hiit|camminat/i;
+
+/**
+ * Rimappa la settimana tipo su lunedi-venerdi, lasciando libero il weekend.
+ * Gli allenamenti con i pesi vengono distribuiti il piu' possibile a giorni
+ * alterni; il cardio riempie i feriali che restano.
+ */
+function compattaInFeriali(
+  split: string[],
+  workouts: { nome: string }[],
+): string[] {
+  const risolve = (etichetta: string) => {
+    const lab = normalizza(etichetta);
+    return workouts.some((w) => {
+      const nome = normalizza(w.nome);
+      return nome.startsWith(lab) || lab.startsWith(nome);
+    });
+  };
+
+  const pesi = split.filter(risolve);
+  const cardio = split.filter((e) => !risolve(e) && SOLO_CARDIO.test(e));
+
+  // posizioni piu' distanziate possibile dentro lunedi-venerdi
+  const DISTRIBUZIONE: Record<number, number[]> = {
+    0: [],
+    1: [2],
+    2: [0, 3],
+    3: [0, 2, 4],
+    4: [0, 1, 3, 4],
+    5: [0, 1, 2, 3, 4],
+  };
+
+  const settimana = Array<string>(7).fill('Riposo completo');
+  const posizioni = DISTRIBUZIONE[Math.min(pesi.length, 5)] ?? [0, 1, 2, 3, 4];
+  posizioni.forEach((giorno, i) => {
+    settimana[giorno] = pesi[i];
+  });
+
+  // i feriali rimasti liberi prendono il cardio, se il programma ne prevede
+  let c = 0;
+  for (let g = 0; g < 5 && c < cardio.length; g++) {
+    if (settimana[g] === 'Riposo completo') settimana[g] = cardio[c++];
+  }
+
+  return settimana;
+}
 
 function normalizza(v: string): string {
   return v

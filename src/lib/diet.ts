@@ -163,11 +163,31 @@ export interface Completamento {
   testo: string;
 }
 
-/** Sceglie l'alimento piu' "puro" per un macro fra le categorie indicate. */
+/**
+ * Sceglie una fonte sensata per un macro.
+ *
+ * Non basta ordinare per "purezza": un limone ha quasi solo carboidrati sulle
+ * sue pochissime calorie e vincerebbe sempre, salvo poi servirne mezzo chilo.
+ * Prima si scartano gli alimenti troppo diluiti, poi si ordina per purezza.
+ */
+const SOGLIA_PER_100G: Record<'carbs' | 'proteine' | 'grassi', number> = {
+  carbs: 25,
+  proteine: 18,
+  grassi: 30,
+};
+
 function migliorFonte(macro: 'carbs' | 'proteine' | 'grassi', categorie: string[]) {
-  return FOODS.filter((f) => categorie.includes(f.categoria) && f[macro] > 0)
-    .map((f) => ({ f, densita: (f[macro] * (macro === 'grassi' ? 9 : 4)) / Math.max(f.kcal, 1) }))
-    .sort((a, b) => b.densita - a.densita)[0]?.f;
+  const soglia = SOGLIA_PER_100G[macro];
+  // le categorie sono in ordine di preferenza: meglio proporre riso che datteri
+  for (const cat of categorie) {
+    const trovato = FOODS.filter(
+      (f) => f.categoria === cat && f[macro] >= soglia && f.unita !== 'pz',
+    )
+      .map((f) => ({ f, purezza: (f[macro] * (macro === 'grassi' ? 9 : 4)) / Math.max(f.kcal, 1) }))
+      .sort((a, b) => b.purezza - a.purezza || a.f.nome.localeCompare(b.f.nome))[0]?.f;
+    if (trovato) return trovato;
+  }
+  return undefined;
 }
 
 /**

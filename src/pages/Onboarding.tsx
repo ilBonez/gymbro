@@ -44,15 +44,15 @@ export default function Onboarding() {
   };
 
   return (
-    <div className="min-h-full bg-ink-900 safe-top safe-bottom">
+    <div className="min-h-full bg-page safe-top safe-bottom">
       <div className="mx-auto max-w-lg px-5 py-8">
         <div className="mb-8 flex items-center gap-2.5">
-          <div className="grid h-9 w-9 place-items-center rounded-xl bg-brand-500 text-ink-950">
+          <div className="grid h-9 w-9 place-items-center rounded-xl bg-brand-500 text-onbrand">
             <Dumbbell size={19} strokeWidth={2.6} />
           </div>
           <div>
             <h1 className="text-lg font-bold leading-tight">GymBro</h1>
-            <p className="text-xs text-ink-400">Allenamento e dieta, nello stesso posto</p>
+            <p className="text-xs text-muted">Allenamento e dieta, nello stesso posto</p>
           </div>
         </div>
 
@@ -60,7 +60,7 @@ export default function Onboarding() {
           {PASSI.map((_, i) => (
             <div
               key={i}
-              className={cx('h-1 flex-1 rounded-full', i <= step ? 'bg-brand-500' : 'bg-ink-700')}
+              className={cx('h-1 flex-1 rounded-full', i <= step ? 'bg-brand-500' : 'bg-line')}
             />
           ))}
         </div>
@@ -79,7 +79,7 @@ export default function Onboarding() {
                     onClick={() => setSesso(s)}
                     className={cx(
                       'rounded-xl border py-2.5 text-sm capitalize',
-                      sesso === s ? 'border-brand-500 bg-brand-500/12 text-brand-300' : 'border-ink-700 bg-ink-800 text-ink-300',
+                      sesso === s ? 'border-brand-500 bg-brand-500/12 text-brandink' : 'border-line bg-raise text-soft',
                     )}
                   >
                     {s}
@@ -109,11 +109,11 @@ export default function Onboarding() {
             </div>
             <Card>
               <div className="flex items-baseline justify-between">
-                <span className="text-sm text-ink-300">Indice di massa corporea</span>
+                <span className="text-sm text-soft">Indice di massa corporea</span>
                 <span className="text-2xl font-bold tabular-nums">{iBmi}</span>
               </div>
               <p className={cx('mt-1 text-sm font-medium', cat.color)}>{cat.label}</p>
-              <p className="mt-2 text-xs text-ink-400">
+              <p className="mt-2 text-xs text-muted">
                 Il BMI è solo un riferimento grezzo: non distingue muscolo da grasso. Peso e misure nel tempo contano molto di più.
               </p>
             </Card>
@@ -132,14 +132,14 @@ export default function Onboarding() {
                 onClick={() => setAttivita(k)}
                 className={cx(
                   'w-full rounded-2xl border p-4 text-left transition-colors',
-                  attivita === k ? 'border-brand-500 bg-brand-500/10' : 'border-ink-700 bg-ink-850',
+                  attivita === k ? 'border-brand-500 bg-brand-500/10' : 'border-line bg-surface',
                 )}
               >
                 <div className="flex items-center justify-between">
                   <span className="font-semibold text-sm">{ACTIVITY_FACTORS[k].label}</span>
-                  <span className="text-xs tabular-nums text-ink-400">×{ACTIVITY_FACTORS[k].f}</span>
+                  <span className="text-xs tabular-nums text-muted">×{ACTIVITY_FACTORS[k].f}</span>
                 </div>
-                <p className="mt-0.5 text-xs text-ink-400">{ACTIVITY_FACTORS[k].desc}</p>
+                <p className="mt-0.5 text-xs text-muted">{ACTIVITY_FACTORS[k].desc}</p>
               </button>
             ))}
             <Button full onClick={avanti}>
@@ -157,31 +157,31 @@ export default function Onboarding() {
                 onClick={() => setObiettivo(g)}
                 className={cx(
                   'w-full rounded-2xl border p-4 text-left transition-colors',
-                  obiettivo === g ? 'border-brand-500 bg-brand-500/10' : 'border-ink-700 bg-ink-850',
+                  obiettivo === g ? 'border-brand-500 bg-brand-500/10' : 'border-line bg-surface',
                 )}
               >
                 <span className="font-semibold text-sm">{GOAL_RULES[g].label}</span>
-                <p className="mt-0.5 text-xs text-ink-400">{GOAL_RULES[g].descrizione}</p>
+                <p className="mt-0.5 text-xs text-muted">{GOAL_RULES[g].descrizione}</p>
               </button>
             ))}
 
-            <Card className="!bg-ink-800/60">
-              <p className="text-xs uppercase tracking-wide text-ink-400">Il tuo punto di partenza</p>
+            <Card className="!bg-raise/60">
+              <p className="text-xs uppercase tracking-wide text-muted">Il tuo punto di partenza</p>
               <div className="mt-3 grid grid-cols-2 gap-3 text-sm">
                 <div>
-                  <span className="text-ink-400 text-xs block">Metabolismo basale</span>
+                  <span className="text-muted text-xs block">Metabolismo basale</span>
                   <span className="font-bold tabular-nums">{b} kcal</span>
                 </div>
                 <div>
-                  <span className="text-ink-400 text-xs block">Fabbisogno (TDEE)</span>
+                  <span className="text-muted text-xs block">Fabbisogno (TDEE)</span>
                   <span className="font-bold tabular-nums">{t} kcal</span>
                 </div>
                 <div>
-                  <span className="text-ink-400 text-xs block">Target giornaliero</span>
-                  <span className="font-bold tabular-nums text-brand-400">{m.kcal} kcal</span>
+                  <span className="text-muted text-xs block">Target giornaliero</span>
+                  <span className="font-bold tabular-nums text-brandink">{m.kcal} kcal</span>
                 </div>
                 <div>
-                  <span className="text-ink-400 text-xs block">Proteine / Carbo / Grassi</span>
+                  <span className="text-muted text-xs block">Proteine / Carbo / Grassi</span>
                   <span className="font-bold tabular-nums">
                     {m.proteine} / {m.carbs} / {m.grassi} g
                   </span>
@@ -192,7 +192,7 @@ export default function Onboarding() {
             <Button full onClick={salva}>
               <Check size={16} className="inline mr-1.5" /> Inizia
             </Button>
-            <p className="pt-1 text-center text-[11px] leading-relaxed text-ink-400">
+            <p className="pt-1 text-center text-[11px] leading-relaxed text-muted">
               GymBro è uno strumento di supporto, non un servizio medico. Se hai patologie, prendi farmaci
               o sei in gravidanza, parlane con un medico prima di cambiare dieta o allenamento.
             </p>

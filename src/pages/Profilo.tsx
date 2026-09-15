@@ -1,16 +1,22 @@
 import { useState } from 'react';
-import { Download, RotateCcw, Save } from 'lucide-react';
+import { Download, Moon, RotateCcw, Save, Smartphone, Sun } from 'lucide-react';
 import { useStore } from '../store/useStore';
 import { ACTIVITY_FACTORS, GOAL_RULES, bmi, bmiCategoria } from '../lib/nutrition';
 import type { ActivityLevel, Sex } from '../types';
 import type { Goal } from '../data/programs';
 import { useTargets } from '../lib/useTargets';
 import { Button, Card, Field, SectionTitle, Stat, Warn, cx, inputCls } from '../components/ui';
+import { TEMI } from '../lib/theme';
+import type { Tema } from '../lib/theme';
 
 export default function Profilo() {
   const profile = useStore((s) => s.profile);
   const aggiorna = useStore((s) => s.aggiornaProfilo);
   const reset = useStore((s) => s.resetTutto);
+  const tema = useStore((s) => s.tema);
+  const setTema = useStore((s) => s.setTema);
+  const obiettivi = useStore((s) => s.obiettiviAttivita);
+  const setObiettivi = useStore((s) => s.setObiettiviAttivita);
   const targets = useTargets(true);
 
   const [salvato, setSalvato] = useState(false);
@@ -126,11 +132,11 @@ export default function Profilo() {
             onClick={() => setBozza({ ...bozza, obiettivo: g })}
             className={cx(
               'w-full rounded-2xl border p-3.5 text-left transition-colors',
-              bozza.obiettivo === g ? 'border-brand-500 bg-brand-500/10' : 'border-ink-700 bg-ink-850',
+              bozza.obiettivo === g ? 'border-brand-500 bg-brand-500/10' : 'border-line bg-surface',
             )}
           >
             <span className="text-sm font-semibold">{GOAL_RULES[g].label}</span>
-            <p className="mt-0.5 text-xs text-ink-400">{GOAL_RULES[g].descrizione}</p>
+            <p className="mt-0.5 text-xs text-muted">{GOAL_RULES[g].descrizione}</p>
           </button>
         ))}
       </div>
@@ -154,19 +160,83 @@ export default function Profilo() {
           label="Target allenamento"
           value={targets.macro.kcal}
           unit="kcal"
-          tone="text-brand-400"
+          tone="text-brandink"
           sub={`P ${targets.macro.proteine} / C ${targets.macro.carbs} / G ${targets.macro.grassi}`}
         />
       </div>
 
       {cambiato && (
-        <div className="sticky bottom-24 mt-5 -mx-4 bg-gradient-to-t from-ink-900 via-ink-900/95 to-transparent px-4 pb-2 pt-6">
+        <div className="sticky bottom-24 mt-5 -mx-4 bg-gradient-to-t from-page via-page/95 to-transparent px-4 pb-2 pt-6">
           <Button full onClick={salva}>
             <Save size={15} className="mr-1.5 -mt-0.5 inline" /> Salva modifiche
           </Button>
         </div>
       )}
-      {salvato && <p className="mt-3 text-center text-xs text-brand-400">Profilo aggiornato.</p>}
+      {salvato && <p className="mt-3 text-center text-xs text-brandink">Profilo aggiornato.</p>}
+
+      <SectionTitle>Aspetto</SectionTitle>
+      <Card className="!p-1.5">
+        <div className="grid grid-cols-3 gap-1.5">
+          {TEMI.map((t) => {
+            const Icona = t.id === 'chiaro' ? Sun : t.id === 'scuro' ? Moon : Smartphone;
+            return (
+              <button
+                key={t.id}
+                onClick={() => setTema(t.id as Tema)}
+                className={cx(
+                  'rounded-xl border px-2 py-3 text-center transition-colors',
+                  tema === t.id
+                    ? 'border-brand-500 bg-brand-500/10 text-brandink'
+                    : 'border-transparent text-muted hover:bg-raise',
+                )}
+              >
+                <Icona size={17} className="mx-auto" />
+                <span className="mt-1.5 block text-xs font-medium">{t.label}</span>
+              </button>
+            );
+          })}
+        </div>
+        <p className="px-2 pb-1.5 pt-2 text-[11px] text-muted">
+          {TEMI.find((t) => t.id === tema)?.desc}
+        </p>
+      </Card>
+
+      <SectionTitle>Obiettivi giornalieri</SectionTitle>
+      <Card className="space-y-3.5">
+        <p className="text-xs leading-relaxed text-muted">
+          Sono i traguardi degli anelli in home: movimento, passi e sonno.
+        </p>
+        <div className="grid grid-cols-3 gap-2.5">
+          <Field label="Kcal">
+            <input
+              type="number"
+              inputMode="numeric"
+              className={cx(inputCls, 'text-center')}
+              value={obiettivi.kcal}
+              onChange={(e) => setObiettivi({ kcal: Math.max(0, +e.target.value) })}
+            />
+          </Field>
+          <Field label="Passi">
+            <input
+              type="number"
+              inputMode="numeric"
+              className={cx(inputCls, 'text-center')}
+              value={obiettivi.passi}
+              onChange={(e) => setObiettivi({ passi: Math.max(0, +e.target.value) })}
+            />
+          </Field>
+          <Field label="Sonno (ore)">
+            <input
+              type="number"
+              step="0.5"
+              inputMode="decimal"
+              className={cx(inputCls, 'text-center')}
+              value={obiettivi.sonnoOre}
+              onChange={(e) => setObiettivi({ sonnoOre: Math.max(0, +e.target.value) })}
+            />
+          </Field>
+        </div>
+      </Card>
 
       <SectionTitle>Dati</SectionTitle>
       <div className="space-y-2.5">
@@ -184,11 +254,11 @@ export default function Profilo() {
         </Button>
       </div>
 
-      <p className="mt-6 text-[11px] leading-relaxed text-ink-400">
+      <p className="mt-6 text-[11px] leading-relaxed text-muted">
         Tutti i dati restano sul tuo dispositivo (localStorage del browser o dell'app). Nessun account, nessun
         server. Se svuoti i dati del browser, li perdi: usa il backup.
       </p>
-      <p className="mt-3 text-[11px] leading-relaxed text-ink-400">
+      <p className="mt-3 text-[11px] leading-relaxed text-muted">
         GymBro non è un dispositivo medico e non sostituisce un medico, un dietista o un preparatore. Le
         stime caloriche hanno un margine di errore del 10-15%: usale come punto di partenza e correggile in
         base ai risultati reali.

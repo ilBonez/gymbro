@@ -1,10 +1,11 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Navigate } from 'react-router-dom';
-import { Check, ChevronDown, Pause, Play, Plus, SkipForward, Square, X } from 'lucide-react';
+import { Check, ChevronDown, Music, Pause, Play, Plus, SkipForward, Square, X } from 'lucide-react';
 import { useStore } from '../store/useStore';
 import { esercizio, scheda } from '../lib/catalog';
 import { Button, Card, Sheet, cx, inputCls } from '../components/ui';
 import { fmtDurata } from '../lib/date';
+import { MusicaSheet } from '../components/MusicaSheet';
 
 function beep(freq = 880, ms = 160) {
   try {
@@ -41,6 +42,7 @@ export default function Sessione() {
   // dove andare quando la sessione viene chiusa: senza questo, lo svuotamento
   // dello store fa scattare il redirect di fallback prima della navigazione
   const [uscita, setUscita] = useState<string | null>(null);
+  const [musica, setMusica] = useState(false);
   const pausaRef = useRef(pausa);
   pausaRef.current = pausa;
 
@@ -94,7 +96,7 @@ export default function Sessione() {
 
   return (
     <div className={cx('pb-6', recupero !== null && 'pb-36')}>
-      <div className="sticky -top-0 z-20 -mx-4 mb-4 border-b border-ink-800 bg-ink-900/95 px-4 pb-3 pt-2 backdrop-blur">
+      <div className="sticky -top-0 z-20 -mx-4 mb-4 border-b border-raise bg-page/95 px-4 pb-3 pt-2 backdrop-blur">
         <div className="flex items-center gap-3">
           <button
             onClick={() => {
@@ -103,27 +105,34 @@ export default function Sessione() {
                 annulla();
               }
             }}
-            className="rounded-lg p-1.5 text-ink-400 hover:bg-ink-800"
+            className="rounded-lg p-1.5 text-muted hover:bg-raise"
             aria-label="Chiudi"
           >
             <X size={19} />
           </button>
           <div className="min-w-0 flex-1">
             <p className="truncate text-sm font-semibold">{w.nome}</p>
-            <p className="text-[11px] text-ink-400">
+            <p className="text-[11px] text-muted">
               {fatte}/{totSerie} serie · {Math.round(volume).toLocaleString('it-IT')} kg
             </p>
           </div>
           <span className="tabular-nums text-xl font-bold">{fmtDurata(sec)}</span>
           <button
+            onClick={() => setMusica(true)}
+            className="rounded-lg bg-raise p-2 text-soft"
+            aria-label="Musica"
+          >
+            <Music size={16} />
+          </button>
+          <button
             onClick={() => setPausa((p) => !p)}
-            className="rounded-lg bg-ink-800 p-2 text-ink-300"
+            className="rounded-lg bg-raise p-2 text-soft"
             aria-label={pausa ? 'Riprendi' : 'Pausa'}
           >
             {pausa ? <Play size={16} /> : <Pause size={16} />}
           </button>
         </div>
-        <div className="mt-2.5 h-1 w-full overflow-hidden rounded-full bg-ink-700">
+        <div className="mt-2.5 h-1 w-full overflow-hidden rounded-full bg-line">
           <div
             className="h-full rounded-full bg-brand-500 transition-all"
             style={{ width: `${totSerie ? (fatte / totSerie) * 100 : 0}%` }}
@@ -146,25 +155,25 @@ export default function Sessione() {
                 <span
                   className={cx(
                     'grid h-8 w-8 shrink-0 place-items-center rounded-lg text-xs font-bold',
-                    complete ? 'bg-brand-500 text-ink-950' : 'bg-ink-800 text-ink-300',
+                    complete ? 'bg-brand-500 text-onbrand' : 'bg-raise text-soft',
                   )}
                 >
                   {complete ? <Check size={15} strokeWidth={3} /> : i + 1}
                 </span>
                 <span className="min-w-0 flex-1">
                   <span className="block truncate text-sm font-semibold">{info?.nome ?? ex.exerciseId}</span>
-                  <span className="block text-[11px] text-ink-400">
+                  <span className="block text-[11px] text-muted">
                     {def ? `${def.serie} × ${def.ripetizioni} · rec ${def.recuperoSec}s` : ''}
                     {def?.rpe ? ` · ${def.rpe}` : ''}
                   </span>
                 </span>
-                <ChevronDown size={17} className={cx('shrink-0 text-ink-400 transition-transform', open && 'rotate-180')} />
+                <ChevronDown size={17} className={cx('shrink-0 text-muted transition-transform', open && 'rotate-180')} />
               </button>
 
               {open && (
-                <div className="border-t border-ink-700/60 px-4 py-3">
-                  {def?.note && <p className="mb-2.5 text-xs text-brand-400">{def.note}</p>}
-                  <div className="mb-1.5 grid grid-cols-[28px_1fr_1fr_44px] gap-2 text-[10px] uppercase tracking-wide text-ink-400">
+                <div className="border-t border-line/60 px-4 py-3">
+                  {def?.note && <p className="mb-2.5 text-xs text-brandink">{def.note}</p>}
+                  <div className="mb-1.5 grid grid-cols-[28px_1fr_1fr_44px] gap-2 text-[10px] uppercase tracking-wide text-muted">
                     <span>#</span>
                     <span>Kg</span>
                     <span>Rip.</span>
@@ -173,7 +182,7 @@ export default function Sessione() {
                   <div className="space-y-2">
                     {ex.serie.map((s, j) => (
                       <div key={j} className="grid grid-cols-[28px_1fr_1fr_44px] items-center gap-2">
-                        <span className="text-xs font-semibold text-ink-400">{j + 1}</span>
+                        <span className="text-xs font-semibold text-muted">{j + 1}</span>
                         <input
                           type="number"
                           inputMode="decimal"
@@ -200,8 +209,8 @@ export default function Sessione() {
                           className={cx(
                             'grid h-9 w-full place-items-center rounded-xl border transition-colors',
                             s.fatto
-                              ? 'border-brand-500 bg-brand-500 text-ink-950'
-                              : 'border-ink-600 text-ink-400',
+                              ? 'border-brand-500 bg-brand-500 text-onbrand'
+                              : 'border-line2 text-muted',
                           )}
                           aria-label="Serie completata"
                         >
@@ -212,7 +221,7 @@ export default function Sessione() {
                   </div>
                   <button
                     onClick={() => aggiungiSerie(i)}
-                    className="mt-2.5 inline-flex items-center gap-1.5 text-xs text-brand-400"
+                    className="mt-2.5 inline-flex items-center gap-1.5 text-xs text-brandink"
                   >
                     <Plus size={13} /> Aggiungi serie
                   </button>
@@ -230,21 +239,21 @@ export default function Sessione() {
       {recupero !== null && (
         <div className="fixed inset-x-0 bottom-0 z-40 safe-bottom">
           <div className="mx-auto max-w-2xl px-4 pb-4">
-            <div className="rounded-2xl border border-brand-500/40 bg-ink-850/95 p-4 backdrop-blur-lg animate-in-up">
+            <div className="rounded-2xl border border-brand-500/40 bg-surface/95 p-4 backdrop-blur-lg animate-in-up">
               <div className="flex items-center gap-4">
                 <div className="flex-1">
-                  <p className="text-[11px] uppercase tracking-wide text-ink-400">Recupero</p>
-                  <p className="text-3xl font-bold tabular-nums text-brand-400">{fmtDurata(recupero)}</p>
+                  <p className="text-[11px] uppercase tracking-wide text-muted">Recupero</p>
+                  <p className="text-3xl font-bold tabular-nums text-brandink">{fmtDurata(recupero)}</p>
                 </div>
                 <button
                   onClick={() => setRecupero((r) => (r ?? 0) + 15)}
-                  className="rounded-xl bg-ink-800 px-3 py-2 text-xs font-medium"
+                  className="rounded-xl bg-raise px-3 py-2 text-xs font-medium"
                 >
                   +15s
                 </button>
                 <button
                   onClick={() => setRecupero(null)}
-                  className="rounded-xl bg-brand-500 px-3 py-2 text-xs font-semibold text-ink-950"
+                  className="rounded-xl bg-brand-500 px-3 py-2 text-xs font-semibold text-onbrand"
                 >
                   <SkipForward size={14} className="mr-1 -mt-0.5 inline" /> Salta
                 </button>
@@ -254,6 +263,8 @@ export default function Sessione() {
         </div>
       )}
 
+      <MusicaSheet open={musica} onClose={() => setMusica(false)} chiave={w.id} titolo={w.nome} />
+
       <Sheet open={fine} onClose={() => setFine(false)} title="Concludi allenamento">
         <div className="space-y-4">
           <div className="grid grid-cols-3 gap-2.5 text-center">
@@ -262,9 +273,9 @@ export default function Sessione() {
               ['Serie', `${fatte}/${totSerie}`],
               ['Volume', `${Math.round(volume).toLocaleString('it-IT')} kg`],
             ].map(([k, v]) => (
-              <div key={k} className="rounded-xl bg-ink-800 py-3">
+              <div key={k} className="rounded-xl bg-raise py-3">
                 <p className="text-base font-bold tabular-nums">{v}</p>
-                <p className="text-[10px] text-ink-400">{k}</p>
+                <p className="text-[10px] text-muted">{k}</p>
               </div>
             ))}
           </div>

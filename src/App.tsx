@@ -1,7 +1,8 @@
-import { Suspense, lazy } from 'react';
+import { Suspense, lazy, useEffect } from 'react';
 import { Navigate, Route, Routes } from 'react-router-dom';
 import { Layout } from './components/Layout';
 import { useStore } from './store/useStore';
+import { applicaTema, ascoltaSistema } from './lib/theme';
 import Onboarding from './pages/Onboarding';
 import Dashboard from './pages/Dashboard';
 import Allena from './pages/Allena';
@@ -22,12 +23,18 @@ import Storico from './pages/Storico';
 
 export default function App() {
   const fatto = useStore((s) => s.onboardingFatto);
+  const tema = useStore((s) => s.tema);
+
+  useEffect(() => {
+    applicaTema(tema);
+    return ascoltaSistema(tema, () => applicaTema(tema));
+  }, [tema]);
 
   if (!fatto) return <Onboarding />;
 
   return (
     <Layout>
-      <Suspense fallback={<p className="py-16 text-center text-sm text-ink-400">Caricamento…</p>}>
+      <Suspense fallback={<p className="py-16 text-center text-sm text-muted">Caricamento…</p>}>
       <Routes>
         <Route path="/" element={<Dashboard />} />
         <Route path="/allena" element={<Allena />} />

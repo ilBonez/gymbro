@@ -19,7 +19,7 @@ export function Card({
     <Tag
       onClick={onClick}
       className={cx(
-        'rounded-2xl bg-ink-850 border border-ink-700/70 p-4',
+        'scheda rounded-2xl bg-surface border border-line/70 p-4',
         onClick && 'w-full text-left active:scale-[.985] transition-transform',
         className,
       )}
@@ -32,7 +32,7 @@ export function Card({
 export function SectionTitle({ children, action }: { children: ReactNode; action?: ReactNode }) {
   return (
     <div className="flex items-end justify-between mb-2.5 mt-6 first:mt-0">
-      <h2 className="text-[13px] font-semibold uppercase tracking-wider text-ink-400">{children}</h2>
+      <h2 className="text-[13px] font-semibold uppercase tracking-wider text-muted">{children}</h2>
       {action}
     </div>
   );
@@ -58,10 +58,10 @@ export function Button({
   full?: boolean;
 }) {
   const styles: Record<BtnVariant, string> = {
-    primary: 'bg-brand-500 text-ink-950 font-semibold hover:bg-brand-400',
-    ghost: 'bg-ink-800 text-ink-100 hover:bg-ink-700',
-    outline: 'border border-ink-600 text-ink-100 hover:bg-ink-800',
-    danger: 'bg-red-500/15 text-red-300 border border-red-500/30 hover:bg-red-500/25',
+    primary: 'bg-brand-500 text-onbrand font-semibold hover:bg-brand-400',
+    ghost: 'bg-raise text-ink hover:bg-line',
+    outline: 'border border-line2 text-ink hover:bg-raise',
+    danger: 'bg-red-500/12 text-red-600 border border-red-500/30 hover:bg-red-500/20',
   };
   return (
     <button
@@ -98,8 +98,8 @@ export function Chip({
       className={cx(
         'shrink-0 rounded-full px-3 py-1.5 text-xs font-medium border transition-colors',
         active
-          ? 'bg-brand-500 text-ink-950 border-brand-500'
-          : 'bg-ink-800 text-ink-300 border-ink-700 hover:border-ink-600',
+          ? 'bg-brand-500 text-onbrand border-brand-500'
+          : 'bg-raise text-soft border-line hover:border-line2',
         className,
       )}
     >
@@ -110,11 +110,11 @@ export function Chip({
 
 export function Tag({ children, tone = 'neutral' }: { children: ReactNode; tone?: 'neutral' | 'brand' | 'carb' | 'fat' | 'danger' }) {
   const tones = {
-    neutral: 'bg-ink-800 text-ink-300 border-ink-700',
-    brand: 'bg-brand-500/12 text-brand-300 border-brand-500/25',
+    neutral: 'bg-raise text-soft border-line',
+    brand: 'bg-brand-500/12 text-brandink border-brand-500/25',
     carb: 'bg-carb/12 text-carb border-carb/25',
     fat: 'bg-fat/12 text-fat border-fat/25',
-    danger: 'bg-red-500/12 text-red-300 border-red-500/25',
+    danger: 'bg-red-500/12 text-red-600 border-red-500/25',
   };
   return (
     <span className={cx('rounded-md border px-2 py-0.5 text-[11px] font-medium', tones[tone])}>
@@ -137,13 +137,13 @@ export function Stat({
   tone?: string;
 }) {
   return (
-    <div className="rounded-2xl bg-ink-850 border border-ink-700/70 p-3.5">
-      <div className="text-[11px] uppercase tracking-wide text-ink-400">{label}</div>
+    <div className="scheda rounded-2xl bg-surface border border-line/70 p-3.5">
+      <div className="text-[11px] uppercase tracking-wide text-muted">{label}</div>
       <div className={cx('mt-1 text-2xl font-bold tabular-nums leading-none', tone)}>
         {value}
-        {unit && <span className="ml-1 text-sm font-medium text-ink-400">{unit}</span>}
+        {unit && <span className="ml-1 text-sm font-medium text-muted">{unit}</span>}
       </div>
-      {sub && <div className="mt-1.5 text-xs text-ink-400">{sub}</div>}
+      {sub && <div className="mt-1.5 text-xs text-muted">{sub}</div>}
     </div>
   );
 }
@@ -161,7 +161,7 @@ export function Bar({
 }) {
   const pct = max > 0 ? Math.min(100, (value / max) * 100) : 0;
   return (
-    <div className={cx('w-full rounded-full bg-ink-700/70 overflow-hidden', height)}>
+    <div className={cx('w-full rounded-full bg-line/70 overflow-hidden', height)}>
       <div className={cx('h-full rounded-full transition-all duration-500', color)} style={{ width: `${pct}%` }} />
     </div>
   );
@@ -178,16 +178,16 @@ export function Field({
 }) {
   return (
     <label className="block">
-      <span className="text-xs font-medium text-ink-300">{label}</span>
+      <span className="text-xs font-medium text-soft">{label}</span>
       <div className="mt-1.5">{children}</div>
-      {hint && <span className="mt-1 block text-[11px] text-ink-400">{hint}</span>}
+      {hint && <span className="mt-1 block text-[11px] text-muted">{hint}</span>}
     </label>
   );
 }
 
 export const inputCls =
-  'w-full rounded-xl bg-ink-800 border border-ink-700 px-3.5 py-2.5 text-sm outline-none ' +
-  'focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 placeholder:text-ink-400';
+  'w-full rounded-xl bg-raise border border-line px-3.5 py-2.5 text-sm outline-none ' +
+  'focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 placeholder:text-muted';
 
 export function Sheet({
   open,
@@ -203,11 +203,11 @@ export function Sheet({
   if (!open) return null;
   return (
     <div className="fixed inset-0 z-50 flex items-end sm:items-center sm:justify-center">
-      <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative w-full sm:max-w-lg max-h-[88vh] overflow-y-auto rounded-t-3xl sm:rounded-3xl bg-ink-850 border border-ink-700 animate-in-up safe-bottom">
-        <div className="sticky top-0 z-10 flex items-center justify-between gap-3 bg-ink-850/95 backdrop-blur px-5 py-4 border-b border-ink-700/70">
+      <div className="absolute inset-0 bg-black/45 backdrop-blur-sm" onClick={onClose} />
+      <div className="relative w-full sm:max-w-lg max-h-[88vh] overflow-y-auto rounded-t-3xl sm:rounded-3xl bg-surface border border-line animate-in-up safe-bottom">
+        <div className="sticky top-0 z-10 flex items-center justify-between gap-3 bg-surface/95 backdrop-blur px-5 py-4 border-b border-line/70">
           <h3 className="text-base font-semibold">{title}</h3>
-          <button onClick={onClose} className="rounded-lg p-1.5 text-ink-400 hover:bg-ink-800 hover:text-ink-100">
+          <button onClick={onClose} className="rounded-lg p-1.5 text-muted hover:bg-raise hover:text-ink">
             <X size={18} />
           </button>
         </div>
@@ -219,10 +219,10 @@ export function Sheet({
 
 export function Empty({ icon, title, sub, action }: { icon?: ReactNode; title: string; sub?: string; action?: ReactNode }) {
   return (
-    <div className="rounded-2xl border border-dashed border-ink-700 py-10 px-6 text-center">
-      {icon && <div className="mb-3 flex justify-center text-ink-600">{icon}</div>}
-      <p className="text-sm font-medium text-ink-300">{title}</p>
-      {sub && <p className="mt-1 text-xs text-ink-400 max-w-xs mx-auto">{sub}</p>}
+    <div className="rounded-2xl border border-dashed border-line py-10 px-6 text-center">
+      {icon && <div className="mb-3 flex justify-center text-line2">{icon}</div>}
+      <p className="text-sm font-medium text-soft">{title}</p>
+      {sub && <p className="mt-1 text-xs text-muted max-w-xs mx-auto">{sub}</p>}
       {action && <div className="mt-4 flex justify-center">{action}</div>}
     </div>
   );

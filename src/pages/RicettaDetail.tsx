@@ -61,25 +61,25 @@ export default function RicettaDetail() {
         ))}
       </div>
 
-      <div className="mt-3 flex items-center gap-4 text-xs text-ink-400">
+      <div className="mt-3 flex items-center gap-4 text-xs text-muted">
         <span className="inline-flex items-center gap-1.5"><Clock size={13} /> {r.tempoMin} min</span>
         <span className="inline-flex items-center gap-1.5"><Users size={13} /> ricetta per {r.porzioni} porz.</span>
       </div>
 
       <Card className="mt-4">
         <div className="flex items-center justify-between">
-          <span className="text-sm text-ink-300">Porzioni</span>
+          <span className="text-sm text-soft">Porzioni</span>
           <div className="flex items-center gap-3">
             <button
               onClick={() => setPorzioni((p) => Math.max(0.5, +(p - 0.5).toFixed(1)))}
-              className="grid h-8 w-8 place-items-center rounded-lg bg-ink-800 text-ink-300"
+              className="grid h-8 w-8 place-items-center rounded-lg bg-raise text-soft"
             >
               <Minus size={15} />
             </button>
             <span className="w-8 text-center text-lg font-bold tabular-nums">{porzioni}</span>
             <button
               onClick={() => setPorzioni((p) => Math.min(6, +(p + 0.5).toFixed(1)))}
-              className="grid h-8 w-8 place-items-center rounded-lg bg-ink-800 text-ink-300"
+              className="grid h-8 w-8 place-items-center rounded-lg bg-raise text-soft"
             >
               <Plus size={15} />
             </button>
@@ -87,14 +87,14 @@ export default function RicettaDetail() {
         </div>
         <div className="mt-4 grid grid-cols-4 gap-2 text-center">
           {[
-            ['kcal', m.kcal, 'text-ink-100'],
+            ['kcal', m.kcal, 'text-ink'],
             ['Prot', m.proteine, 'text-prot'],
             ['Carb', m.carbs, 'text-carb'],
             ['Gras', m.grassi, 'text-fat'],
           ].map(([k, v, c]) => (
-            <div key={k as string} className="rounded-xl bg-ink-800 py-2.5">
+            <div key={k as string} className="rounded-xl bg-raise py-2.5">
               <p className={`text-base font-bold tabular-nums ${c}`}>{v}</p>
-              <p className="text-[10px] text-ink-400">{k}</p>
+              <p className="text-[10px] text-muted">{k}</p>
             </div>
           ))}
         </div>
@@ -102,16 +102,16 @@ export default function RicettaDetail() {
 
       <SectionTitle>Ingredienti</SectionTitle>
       <Card className="!p-3.5">
-        <ul className="divide-y divide-ink-700/60">
+        <ul className="divide-y divide-line/60">
           {r.ingredienti.map((i, idx) => {
             const f = i.foodId ? alimento(i.foodId) : undefined;
             return (
               <li key={idx} className="flex items-center gap-3 py-2.5">
                 <span className="min-w-0 flex-1 text-sm">
                   {f?.nome ?? i.nome}
-                  {f?.marca && <span className="ml-1.5 text-[11px] text-ink-400">{f.marca}</span>}
+                  {f?.marca && <span className="ml-1.5 text-[11px] text-muted">{f.marca}</span>}
                 </span>
-                <span className="shrink-0 text-sm tabular-nums text-ink-300">
+                <span className="shrink-0 text-sm tabular-nums text-soft">
                   {i.unita === 'q.b.' ? 'q.b.' : `${Math.round(i.qta * porzioni * 10) / 10} ${i.unita}`}
                 </span>
                 {f?.ricercaUrl && (
@@ -119,7 +119,7 @@ export default function RicettaDetail() {
                     href={f.ricercaUrl}
                     target="_blank"
                     rel="noreferrer noopener"
-                    className="shrink-0 text-ink-400 hover:text-brand-400"
+                    className="shrink-0 text-muted hover:text-brandink"
                     aria-label={`Cerca ${f.nome} su Eurospin`}
                   >
                     <ExternalLink size={14} />
@@ -136,7 +136,7 @@ export default function RicettaDetail() {
         <ol className="space-y-2.5">
           {r.procedimento.map((p, i) => (
             <li key={i} className="flex gap-3 text-sm leading-snug text-ink-200">
-              <span className="grid h-5 w-5 shrink-0 place-items-center rounded-md bg-brand-500/15 text-[11px] font-bold text-brand-400">
+              <span className="grid h-5 w-5 shrink-0 place-items-center rounded-md bg-brand-500/15 text-[11px] font-bold text-brandink">
                 {i + 1}
               </span>
               {p}

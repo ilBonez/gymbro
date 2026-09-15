@@ -43,17 +43,26 @@ tutti gli effetti e continua a funzionare offline.
 | --- | --- |
 | **Home** | Allenamento di oggi, macro della giornata, checklist integratori, peso |
 | **Allena** | 4 programmi (definizione low carb, forza, massa, mantenimento), 16 schede, 86 esercizi con esecuzione ed errori comuni |
-| **Sessione** | Timer, log di serie/carico/ripetizioni, timer di recupero con beep |
-| **Piano** | Calendario: stendi un programma su più settimane, o cambia il singolo giorno |
-| **Dieta** | Menu generato sui tuoi macro da 54 ricette, diario pasti, ricettario |
+| **Sessione** | Timer, log di serie/carico/ripetizioni, timer di recupero con beep, playlist Spotify |
+| **Piano** | Calendario: stendi un programma su più settimane (anche solo lun-ven), calorie e passi giorno per giorno |
+| **Dieta** | Menu generato sui tuoi macro da 54 ricette, diario pasti (anche a mano o "sgarro"), ricettario |
 | **Spesa** | Lista dei 7 giorni raggruppata per reparto, con link di ricerca Eurospin |
-| **Progressi** | Peso, girovita, BMI, volume settimanale, dati letti dal telefono |
+| **Progressi** | Peso, girovita, BMI, volume settimanale, anelli di movimento/passi/sonno da Health Connect |
 
 Calorie e macro: metabolismo basale con Mifflin-St Jeor, TDEE per livello di attività, macro per
 obiettivo (le regole stanno in [`src/lib/nutrition.ts`](src/lib/nutrition.ts)). Il blocco low carb è
 limitato a 4-6 settimane e l'app avvisa quando è ora di smettere.
 
+Ogni programma mostra anche quante calorie costa una seduta e che variazione di peso aspettarsi in una
+settimana: sono stime con un margine del 20-30%, utili per confrontare un blocco con l'altro.
+
 I prezzi degli alimenti sono **indicativi**: cambiano da un punto vendita all'altro.
+
+Il tema si sceglie dal profilo: chiaro, scuro o automatico.
+
+**Spotify:** a ogni scheda puoi associare una playlist incollando il suo link; durante l'allenamento un
+tasto la apre in Spotify. Non c'è un player interno — servirebbero un'app registrata su Spotify e un
+account Premium.
 
 ## Comandi
 

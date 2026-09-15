@@ -36,10 +36,10 @@ export default function Esercizi() {
   return (
     <div>
       <h1 className="text-2xl font-bold tracking-tight">Libreria esercizi</h1>
-      <p className="mt-1 text-sm text-ink-400">{EXERCISES.length} esercizi con esecuzione e alternative.</p>
+      <p className="mt-1 text-sm text-muted">{EXERCISES.length} esercizi con esecuzione e alternative.</p>
 
       <div className="relative mt-4">
-        <Search size={16} className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-ink-400" />
+        <Search size={16} className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-muted" />
         <input
           value={q}
           onChange={(e) => setQ(e.target.value)}
@@ -68,7 +68,7 @@ export default function Esercizi() {
         ))}
       </div>
 
-      <p className="mt-4 text-xs text-ink-400">{risultati.length} risultati</p>
+      <p className="mt-4 text-xs text-muted">{risultati.length} risultati</p>
 
       <div className="mt-2 space-y-2">
         {risultati.length === 0 && <Empty title="Nessun esercizio trovato" sub="Prova a togliere qualche filtro." />}
@@ -79,7 +79,7 @@ export default function Esercizi() {
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-1.5">
                     <h3 className="truncate text-sm font-semibold">{e.nome}</h3>
-                    {preferiti.includes(e.id) && <Star size={12} className="shrink-0 text-brand-400" fill="currentColor" />}
+                    {preferiti.includes(e.id) && <Star size={12} className="shrink-0 text-brandink" fill="currentColor" />}
                   </div>
                   <div className="mt-1.5 flex flex-wrap gap-1.5">
                     <Tag tone="brand">{e.gruppi[0]}</Tag>
@@ -87,7 +87,7 @@ export default function Esercizi() {
                     <Tag>{e.tipo}</Tag>
                   </div>
                 </div>
-                <ChevronRight size={16} className="shrink-0 text-ink-400" />
+                <ChevronRight size={16} className="shrink-0 text-muted" />
               </div>
             </Card>
           </Link>

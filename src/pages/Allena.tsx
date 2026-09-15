@@ -15,22 +15,22 @@ export default function Allena() {
   return (
     <div>
       <h1 className="text-2xl font-bold tracking-tight">Allenamento</h1>
-      <p className="mt-1 text-sm text-ink-400">
+      <p className="mt-1 text-sm text-muted">
         Quattro blocchi pronti. Scegline uno e appoggialo sul calendario.
       </p>
 
       <Link
         to="/esercizi"
-        className="mt-4 flex items-center gap-3 rounded-2xl border border-ink-700/70 bg-ink-850 px-4 py-3.5"
+        className="mt-4 flex items-center gap-3 rounded-2xl border border-line/70 bg-surface px-4 py-3.5"
       >
-        <span className="grid h-9 w-9 place-items-center rounded-xl bg-brand-500/12 text-brand-400">
+        <span className="grid h-9 w-9 place-items-center rounded-xl bg-brand-500/12 text-brandink">
           <BookOpen size={17} />
         </span>
         <span className="flex-1">
           <span className="block text-sm font-semibold">Libreria esercizi</span>
-          <span className="block text-xs text-ink-400">Schede, esecuzione, errori, alternative</span>
+          <span className="block text-xs text-muted">Schede, esecuzione, errori, alternative</span>
         </span>
-        <ChevronRight size={17} className="text-ink-400" />
+        <ChevronRight size={17} className="text-muted" />
       </Link>
 
       <SectionTitle>Programmi</SectionTitle>
@@ -44,12 +44,12 @@ export default function Allena() {
                     <h3 className="text-base font-bold leading-tight">{p.nome}</h3>
                     {p.goal === obiettivo && <Tag tone="brand">Il tuo obiettivo</Tag>}
                   </div>
-                  <p className="mt-1 text-sm leading-snug text-ink-300">{p.descrizione}</p>
+                  <p className="mt-1 text-sm leading-snug text-soft">{p.descrizione}</p>
                 </div>
-                <ChevronRight size={18} className="mt-1 shrink-0 text-ink-400" />
+                <ChevronRight size={18} className="mt-1 shrink-0 text-muted" />
               </div>
 
-              <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1.5 text-xs text-ink-400">
+              <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1.5 text-xs text-muted">
                 <span className="inline-flex items-center gap-1.5">
                   <Clock size={13} /> {p.durataSettimane} settimane
                 </span>
@@ -66,7 +66,7 @@ export default function Allena() {
                 )}
               </div>
 
-              <p className="mt-2.5 text-[11px] text-ink-400">
+              <p className="mt-2.5 text-[11px] text-muted">
                 Dieta abbinata: {GOAL_RULES[p.goal].label}
               </p>
             </Card>

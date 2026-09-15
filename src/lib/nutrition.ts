@@ -27,7 +27,7 @@ export function bmi(pesoKg: number, altezzaCm: number): number {
 
 export function bmiCategoria(v: number): { label: string; color: string } {
   if (v < 18.5) return { label: 'Sottopeso', color: 'text-sky-400' };
-  if (v < 25) return { label: 'Normopeso', color: 'text-brand-400' };
+  if (v < 25) return { label: 'Normopeso', color: 'text-brandink' };
   if (v < 30) return { label: 'Sovrappeso', color: 'text-carb' };
   return { label: 'Obesità', color: 'text-red-400' };
 }

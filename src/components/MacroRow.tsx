@@ -16,9 +16,9 @@ export function MacroRow({
   return (
     <div>
       <div className="mb-1 flex items-baseline justify-between text-xs">
-        <span className="text-ink-300">{label}</span>
-        <span className="tabular-nums text-ink-400">
-          <span className="font-semibold text-ink-100">{Math.round(value)}</span> / {target} {unit}
+        <span className="text-soft">{label}</span>
+        <span className="tabular-nums text-muted">
+          <span className="font-semibold text-ink">{Math.round(value)}</span> / {target} {unit}
         </span>
       </div>
       <Bar value={value} max={target} color={color} height="h-1.5" />
@@ -51,9 +51,9 @@ export function MacroBlock({
       <div className="flex items-end justify-between">
         <div>
           <span className="text-3xl font-bold tabular-nums">{Math.round(kcal)}</span>
-          <span className="ml-1 text-sm text-ink-400">/ {kcalTarget} kcal</span>
+          <span className="ml-1 text-sm text-muted">/ {kcalTarget} kcal</span>
         </div>
-        <span className={resto >= 0 ? 'text-xs text-ink-400' : 'text-xs text-carb'}>
+        <span className={resto >= 0 ? 'text-xs text-muted' : 'text-xs text-carb'}>
           {resto >= 0 ? `${Math.round(resto)} kcal rimaste` : `${Math.abs(Math.round(resto))} kcal oltre`}
         </span>
       </div>

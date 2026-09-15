@@ -5,6 +5,9 @@ import { PROGRAMS } from '../data/programs';
 import { SUPPLEMENTS, TIMING_LABEL, supplementById } from '../data/supplements';
 import { useTargets } from '../lib/useTargets';
 import { MacroBlock } from '../components/MacroRow';
+import { Anelli } from '../components/Anelli';
+import { kcalMovimento } from '../lib/health';
+import { kcalScheda } from '../lib/burn';
 import { Button, Card, Empty, SectionTitle, Stat, Tag, Warn, cx } from '../components/ui';
 import { giorniTra, labelLungo, oggi } from '../lib/date';
 import { GOAL_RULES } from '../lib/nutrition';
@@ -17,6 +20,8 @@ export default function Dashboard() {
   const pesi = useStore((s) => s.pesi);
   const sessioni = useStore((s) => s.sessioni);
   const integratoriAttivi = useStore((s) => s.integratoriAttivi);
+  const giorniSalute = useStore((s) => s.giorniSalute);
+  const obiettiviAttivita = useStore((s) => s.obiettiviAttivita);
   const logIntegratori = useStore((s) => s.logIntegratori);
   const segnaIntegratore = useStore((s) => s.segnaIntegratore);
 
@@ -27,7 +32,11 @@ export default function Dashboard() {
   const allenamentoOggi = !!workout;
 
   const targets = useTargets(allenamentoOggi);
+  const saluteOggi = giorniSalute[today];
   if (!profile || !targets) return null;
+
+  const kcalPrevisteAllenamento =
+    workout && programma ? kcalScheda(workout, programma.goal, targets.pesoKg) : 0;
 
   const pastiOggi = pasti.filter((p) => p.data === today);
   const consumati = pastiOggi.reduce(
@@ -62,10 +71,10 @@ export default function Dashboard() {
   return (
     <div className="space-y-1">
       <div className="mb-4">
-        <p className="text-xs uppercase tracking-wide text-ink-400">{labelLungo(today)}</p>
+        <p className="text-xs uppercase tracking-wide text-muted">{labelLungo(today)}</p>
         <h1 className="mt-0.5 text-2xl font-bold tracking-tight">Ciao {profile.nome.split(' ')[0]} 👋</h1>
-        <p className="mt-1 text-sm text-ink-400">
-          Obiettivo: <span className="text-brand-400">{GOAL_RULES[profile.obiettivo].label}</span>
+        <p className="mt-1 text-sm text-muted">
+          Obiettivo: <span className="text-brandink">{GOAL_RULES[profile.obiettivo].label}</span>
         </p>
       </div>
 
@@ -80,16 +89,19 @@ export default function Dashboard() {
 
       <SectionTitle>Oggi</SectionTitle>
       {workout && programma ? (
-        <Card className="!border-brand-500/35 !bg-gradient-to-br from-brand-500/12 to-ink-850">
+        <Card className="!border-brand-500/35 !bg-gradient-to-br from-brand-500/12 to-surface">
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0">
               <Tag tone="brand">{programma.nome}</Tag>
               <h3 className="mt-2 text-lg font-bold leading-tight">{workout.nome}</h3>
-              <p className="mt-0.5 text-sm text-ink-300">{workout.focus}</p>
+              <p className="mt-0.5 text-sm text-soft">{workout.focus}</p>
             </div>
             <div className="shrink-0 text-right">
               <p className="text-2xl font-bold tabular-nums">{workout.durataMin}'</p>
-              <p className="text-[11px] text-ink-400">{workout.esercizi.length} esercizi</p>
+              <p className="text-[11px] text-muted">{workout.esercizi.length} esercizi</p>
+              <p className="mt-0.5 text-[11px] text-brandink">
+                ~{kcalScheda(workout, programma.goal, targets.pesoKg)} kcal
+              </p>
             </div>
           </div>
           <Button
@@ -103,12 +115,12 @@ export default function Dashboard() {
       ) : giorno ? (
         <Card>
           <div className="flex items-center gap-3">
-            <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-ink-800 text-ink-300">
+            <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-raise text-soft">
               <Moon size={18} />
             </span>
             <div>
               <h3 className="font-semibold">Giorno di riposo</h3>
-              <p className="text-xs text-ink-400">
+              <p className="text-xs text-muted">
                 {giorno.cardio
                   ? `Consigliato: ${giorno.cardio.tipo}, ${giorno.cardio.durataMin} min`
                   : 'Recupero attivo: camminata, mobilità, sonno.'}
@@ -125,7 +137,31 @@ export default function Dashboard() {
         />
       )}
 
-      <SectionTitle action={<Link to="/dieta" className="text-xs text-brand-400">Dettagli</Link>}>
+      {saluteOggi && (
+        <>
+          <SectionTitle action={<Link to="/progressi" className="text-xs text-brandink">Dettagli</Link>}>
+            Attività di oggi
+          </SectionTitle>
+          <Card>
+            <Anelli
+              kcal={kcalMovimento(saluteOggi)}
+              kcalObiettivo={obiettiviAttivita.kcal}
+              passi={saluteOggi.passi}
+              passiObiettivo={obiettiviAttivita.passi}
+              sonnoMin={saluteOggi.sonnoMin}
+              sonnoObiettivoMin={Math.round(obiettiviAttivita.sonnoOre * 60)}
+            />
+            {kcalPrevisteAllenamento > 0 && (
+              <p className="mt-3 border-t border-line pt-3 text-[11px] text-muted">
+                L'allenamento di oggi vale circa{' '}
+                <b className="text-brandink">{kcalPrevisteAllenamento} kcal</b> in più, se lo fai.
+              </p>
+            )}
+          </Card>
+        </>
+      )}
+
+      <SectionTitle action={<Link to="/dieta" className="text-xs text-brandink">Dettagli</Link>}>
         Nutrizione di oggi
       </SectionTitle>
       <Card>
@@ -140,21 +176,21 @@ export default function Dashboard() {
           tGrassi={targets.macro.grassi}
         />
         {pastiOggi.length === 0 && (
-          <p className="mt-3 text-xs text-ink-400">
-            Nessun pasto registrato. Apri <Link to="/dieta" className="text-brand-400">Dieta</Link> per il menu
+          <p className="mt-3 text-xs text-muted">
+            Nessun pasto registrato. Apri <Link to="/dieta" className="text-brandink">Dieta</Link> per il menu
             generato su misura per oggi.
           </p>
         )}
       </Card>
 
-      <SectionTitle action={<Link to="/integratori" className="text-xs text-brand-400">Gestisci</Link>}>
+      <SectionTitle action={<Link to="/integratori" className="text-xs text-brandink">Gestisci</Link>}>
         Integratori · {presiOggi}/{stack.length}
       </SectionTitle>
       <Card className="!p-2">
         {stack.length === 0 ? (
-          <p className="p-3 text-xs text-ink-400">Nessun integratore attivo.</p>
+          <p className="p-3 text-xs text-muted">Nessun integratore attivo.</p>
         ) : (
-          <ul className="divide-y divide-ink-700/60">
+          <ul className="divide-y divide-line/60">
             {stack.map((s) => {
               const preso = !!logIntegratori[`${today}|${s.id}`];
               return (
@@ -166,16 +202,16 @@ export default function Dashboard() {
                     <span
                       className={cx(
                         'grid h-6 w-6 shrink-0 place-items-center rounded-md border transition-colors',
-                        preso ? 'border-brand-500 bg-brand-500 text-ink-950' : 'border-ink-600',
+                        preso ? 'border-brand-500 bg-brand-500 text-onbrand' : 'border-line2',
                       )}
                     >
                       {preso && <Pill size={13} strokeWidth={3} />}
                     </span>
                     <span className="min-w-0 flex-1">
-                      <span className={cx('block text-sm font-medium', preso && 'text-ink-400 line-through')}>
+                      <span className={cx('block text-sm font-medium', preso && 'text-muted line-through')}>
                         {s.nome}
                       </span>
-                      <span className="block text-[11px] text-ink-400">{s.dose}</span>
+                      <span className="block text-[11px] text-muted">{s.dose}</span>
                     </span>
                     <Tag tone={s.timing === 'pre-workout' ? 'brand' : 'neutral'}>{TIMING_LABEL[s.timing]}</Tag>
                   </button>
@@ -194,7 +230,7 @@ export default function Dashboard() {
           unit="kg"
           sub={
             delta !== null ? (
-              <span className={delta < 0 ? 'text-brand-400' : delta > 0 ? 'text-carb' : ''}>
+              <span className={delta < 0 ? 'text-brandink' : delta > 0 ? 'text-carb' : ''}>
                 {delta > 0 ? '+' : ''}
                 {delta} kg in 7 giorni
               </span>
@@ -209,33 +245,33 @@ export default function Dashboard() {
           label="Target oggi"
           value={targets.macro.kcal}
           unit="kcal"
-          tone="text-brand-400"
+          tone="text-brandink"
           sub={allenamentoOggi ? 'Giorno di allenamento' : 'Giorno di riposo'}
         />
       </div>
 
       <div className="mt-4 grid grid-cols-3 gap-3">
-        <Link to="/progressi" className="rounded-2xl border border-ink-700/70 bg-ink-850 p-3.5 text-center">
-          <LineChart size={19} className="mx-auto text-brand-400" />
+        <Link to="/progressi" className="rounded-2xl border border-line/70 bg-surface p-3.5 text-center">
+          <LineChart size={19} className="mx-auto text-brandink" />
           <span className="mt-1.5 block text-xs font-medium">Progressi</span>
         </Link>
-        <Link to="/storico" className="rounded-2xl border border-ink-700/70 bg-ink-850 p-3.5 text-center">
-          <Timer size={19} className="mx-auto text-brand-400" />
+        <Link to="/storico" className="rounded-2xl border border-line/70 bg-surface p-3.5 text-center">
+          <Timer size={19} className="mx-auto text-brandink" />
           <span className="mt-1.5 block text-xs font-medium">Storico</span>
         </Link>
-        <Link to="/progressi" className="rounded-2xl border border-ink-700/70 bg-ink-850 p-3.5 text-center">
-          <Scale size={19} className="mx-auto text-brand-400" />
+        <Link to="/progressi" className="rounded-2xl border border-line/70 bg-surface p-3.5 text-center">
+          <Scale size={19} className="mx-auto text-brandink" />
           <span className="mt-1.5 block text-xs font-medium">Pesati</span>
         </Link>
       </div>
 
       <Link
         to="/allena"
-        className="mt-3 flex items-center gap-3 rounded-2xl border border-ink-700/70 bg-ink-850 px-4 py-3.5"
+        className="mt-3 flex items-center gap-3 rounded-2xl border border-line/70 bg-surface px-4 py-3.5"
       >
-        <Flame size={18} className="text-brand-400" />
+        <Flame size={18} className="text-brandink" />
         <span className="flex-1 text-sm font-medium">Sfoglia programmi ed esercizi</span>
-        <ChevronRight size={17} className="text-ink-400" />
+        <ChevronRight size={17} className="text-muted" />
       </Link>
     </div>
   );

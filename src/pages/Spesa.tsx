@@ -54,7 +54,7 @@ export default function Spesa() {
       <div className="flex items-start justify-between gap-3">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Lista della spesa</h1>
-          <p className="mt-1 text-sm text-ink-400">
+          <p className="mt-1 text-sm text-muted">
             {spesa.length === 0 ? 'Vuota' : `${presi}/${spesa.length} presi`}
           </p>
         </div>
@@ -62,7 +62,7 @@ export default function Spesa() {
           {presi > 0 && (
             <button
               onClick={() => svuota(true)}
-              className="rounded-lg p-2 text-ink-400 hover:bg-ink-800"
+              className="rounded-lg p-2 text-muted hover:bg-raise"
               title="Rimuovi i presi"
             >
               <Check size={17} />
@@ -71,7 +71,7 @@ export default function Spesa() {
           {spesa.length > 0 && (
             <button
               onClick={() => confirm('Svuotare la lista?') && svuota(false)}
-              className="rounded-lg p-2 text-ink-400 hover:bg-ink-800 hover:text-red-300"
+              className="rounded-lg p-2 text-muted hover:bg-raise hover:text-red-300"
             >
               <Trash2 size={17} />
             </button>
@@ -103,29 +103,29 @@ export default function Spesa() {
           <div key={cat}>
             <SectionTitle>{CATEGORIA_LABEL[cat] ?? cat}</SectionTitle>
             <Card className="!p-1.5">
-              <ul className="divide-y divide-ink-700/50">
+              <ul className="divide-y divide-line/50">
                 {items.map((i) => (
                   <li key={i.id} className="flex items-center gap-2.5 px-2 py-2.5">
                     <button
                       onClick={() => toggle(i.id)}
                       className={cx(
                         'grid h-6 w-6 shrink-0 place-items-center rounded-md border transition-colors',
-                        i.preso ? 'border-brand-500 bg-brand-500 text-ink-950' : 'border-ink-600',
+                        i.preso ? 'border-brand-500 bg-brand-500 text-onbrand' : 'border-line2',
                       )}
                       aria-label="Preso"
                     >
                       {i.preso && <Check size={13} strokeWidth={3} />}
                     </button>
                     <div className="min-w-0 flex-1">
-                      <p className={cx('truncate text-sm', i.preso && 'text-ink-400 line-through')}>{i.nome}</p>
-                      {i.qta && <p className="text-[11px] text-ink-400">{i.qta}</p>}
+                      <p className={cx('truncate text-sm', i.preso && 'text-muted line-through')}>{i.nome}</p>
+                      {i.qta && <p className="text-[11px] text-muted">{i.qta}</p>}
                     </div>
                     {i.ricercaUrl && (
                       <a
                         href={i.ricercaUrl}
                         target="_blank"
                         rel="noreferrer noopener"
-                        className="shrink-0 rounded-lg p-1.5 text-ink-400 hover:text-brand-400"
+                        className="shrink-0 rounded-lg p-1.5 text-muted hover:text-brandink"
                         aria-label="Cerca su Eurospin"
                       >
                         <ExternalLink size={14} />
@@ -133,7 +133,7 @@ export default function Spesa() {
                     )}
                     <button
                       onClick={() => remove(i.id)}
-                      className="shrink-0 rounded-lg p-1.5 text-ink-400 hover:text-red-300"
+                      className="shrink-0 rounded-lg p-1.5 text-muted hover:text-red-300"
                       aria-label="Rimuovi"
                     >
                       <Trash2 size={13} />
@@ -170,7 +170,7 @@ export default function Spesa() {
         ))}
       </div>
 
-      <p className="mt-5 text-[11px] leading-relaxed text-ink-400">
+      <p className="mt-5 text-[11px] leading-relaxed text-muted">
         I link aprono la ricerca sul sito Eurospin nel browser. Disponibilità e prezzi cambiano per punto
         vendita: quelli in app sono indicativi.
       </p>

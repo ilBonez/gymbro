@@ -23,21 +23,21 @@ export function Layout({ children }: { children: ReactNode }) {
   const nascondiNav = pathname.startsWith('/sessione');
 
   return (
-    <div className="min-h-full bg-ink-900">
+    <div className="min-h-full bg-page">
       {!nascondiNav && (
-      <header className="sticky top-0 z-30 safe-top bg-ink-900/85 backdrop-blur-lg border-b border-ink-800">
+      <header className="sticky top-0 z-30 safe-top bg-page/85 backdrop-blur-lg border-b border-raise">
         <div className="mx-auto flex max-w-2xl items-center gap-3 px-4 h-14">
           {!isTab && !nascondiNav ? (
             <button
               onClick={() => nav(-1)}
-              className="-ml-1.5 rounded-lg p-1.5 text-ink-300 hover:bg-ink-800"
+              className="-ml-1.5 rounded-lg p-1.5 text-soft hover:bg-raise"
               aria-label="Indietro"
             >
               <ChevronLeft size={20} />
             </button>
           ) : (
             <div className="flex items-center gap-2">
-              <div className="grid h-7 w-7 place-items-center rounded-lg bg-brand-500 text-ink-950">
+              <div className="grid h-7 w-7 place-items-center rounded-lg bg-brand-500 text-onbrand">
                 <Dumbbell size={16} strokeWidth={2.6} />
               </div>
               <span className="text-[15px] font-bold tracking-tight">GymBro</span>
@@ -47,7 +47,7 @@ export function Layout({ children }: { children: ReactNode }) {
           {!nascondiNav && (
             <NavLink
               to="/profilo"
-              className="rounded-full border border-ink-700 bg-ink-850 px-2.5 py-1.5 text-xs text-ink-300 hover:border-ink-600 flex items-center gap-1.5"
+              className="rounded-full border border-line bg-surface px-2.5 py-1.5 text-xs text-soft hover:border-line2 flex items-center gap-1.5"
             >
               <User size={14} />
               {profile?.nome?.split(' ')[0] ?? 'Profilo'}
@@ -64,7 +64,7 @@ export function Layout({ children }: { children: ReactNode }) {
       {!nascondiNav && inSessione && <TimerBar />}
 
       {!nascondiNav && (
-        <nav className="fixed bottom-0 inset-x-0 z-30 safe-bottom border-t border-ink-800 bg-ink-900/92 backdrop-blur-lg">
+        <nav className="fixed bottom-0 inset-x-0 z-30 safe-bottom border-t border-raise bg-page/92 backdrop-blur-lg">
           <div className="mx-auto flex max-w-2xl">
             {TABS.map(({ to, label, icon: Icon }) => (
               <NavLink
@@ -74,7 +74,7 @@ export function Layout({ children }: { children: ReactNode }) {
                 className={({ isActive }) =>
                   cx(
                     'flex flex-1 flex-col items-center gap-1 py-2.5 text-[10px] font-medium transition-colors',
-                    isActive ? 'text-brand-400' : 'text-ink-400',
+                    isActive ? 'text-brandink' : 'text-muted',
                   )
                 }
               >

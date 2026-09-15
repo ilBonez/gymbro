@@ -1,5 +1,6 @@
 import { Health } from '@capgo/capacitor-health';
 import type { HealthDataType } from '@capgo/capacitor-health';
+import type { GiornoSalute } from '../store/useStore';
 
 /**
  * Ponte verso Health Connect (Android) e HealthKit (iOS).
@@ -9,7 +10,7 @@ import type { HealthDataType } from '@capgo/capacitor-health';
  */
 
 /** Dati che GymBro legge. Nient'altro viene richiesto. */
-export const TIPI_LETTI: HealthDataType[] = ['weight', 'steps', 'calories', 'heartRate'];
+export const TIPI_LETTI: HealthDataType[] = ['weight', 'steps', 'calories', 'heartRate', 'sleep'];
 
 export interface StatoHealth {
   disponibile: boolean;
@@ -20,21 +21,31 @@ export interface StatoHealth {
   storicoEsteso: boolean | null;
 }
 
-export interface GiornoAttivita {
-  data: string; // yyyy-MM-dd
-  passi: number;
-  kcalAttive: number;
-}
-
 export interface DatiHealth {
   pesoKg: number | null;
   pesoData: string | null;
   pesoFonte: string | null;
-  giorni: GiornoAttivita[];
+  giorni: GiornoSalute[];
   fcRiposo: number | null;
 }
 
 const giorniFa = (n: number) => new Date(Date.now() - n * 86400000).toISOString();
+const giorno = (iso: string) => iso.slice(0, 10);
+
+/**
+ * Calorie bruciate camminando, quando il telefono conta i passi ma non le calorie.
+ * Circa 0.0004-0.0005 kcal per passo per kg: per 80 kg fanno ~360 kcal ogni 10.000 passi.
+ * È una stima al ribasso, e non va mai sommata alle calorie attive misurate,
+ * che i passi li contengono già.
+ */
+export function kcalDaPassi(passi: number, pesoKg: number): number {
+  return Math.round(passi * pesoKg * 0.00045);
+}
+
+/** Calorie di movimento del giorno: le misurate se ci sono, altrimenti la stima. */
+export function kcalMovimento(g: GiornoSalute): number {
+  return g.kcalAttive > 0 ? g.kcalAttive : g.kcalStimateDaPassi;
+}
 
 export async function statoHealth(): Promise<StatoHealth> {
   try {
@@ -109,8 +120,8 @@ async function ultimoPeso(): Promise<Pick<DatiHealth, 'pesoKg' | 'pesoData' | 'p
     const s = samples[0];
     if (!s) return { pesoKg: null, pesoData: null, pesoFonte: null };
     return {
-      pesoKg: s.unit === 'kilogram' ? Math.round(s.value * 10) / 10 : Math.round(s.value * 10) / 10,
-      pesoData: s.endDate.slice(0, 10),
+      pesoKg: Math.round(s.value * 10) / 10,
+      pesoData: giorno(s.endDate),
       pesoFonte: s.sourceName ?? s.deviceType ?? null,
     };
   } catch {
@@ -118,7 +129,7 @@ async function ultimoPeso(): Promise<Pick<DatiHealth, 'pesoKg' | 'pesoData' | 'p
   }
 }
 
-async function aggregatoGiornaliero(dataType: HealthDataType, giorni: number) {
+async function sommaPerGiorno(dataType: HealthDataType, giorni: number) {
   try {
     const { samples } = await Health.queryAggregated({
       dataType,
@@ -131,6 +142,48 @@ async function aggregatoGiornaliero(dataType: HealthDataType, giorni: number) {
   } catch {
     return [];
   }
+}
+
+/** Minuti di sonno per notte, attribuiti al giorno del risveglio. */
+async function sonnoPerGiorno(giorni: number): Promise<Map<string, number>> {
+  const out = new Map<string, number>();
+  try {
+    const { samples } = await Health.readSamples({
+      dataType: 'sleep',
+      startDate: giorniFa(giorni),
+      endDate: new Date().toISOString(),
+      ascending: true,
+    });
+    for (const s of samples) {
+      // le fasi "sveglio" dentro una sessione non contano come sonno
+      if (s.sleepState === 'awake') continue;
+      const minuti = (new Date(s.endDate).getTime() - new Date(s.startDate).getTime()) / 60000;
+      if (minuti <= 0 || minuti > 16 * 60) continue;
+      const k = giorno(s.endDate);
+      out.set(k, (out.get(k) ?? 0) + minuti);
+    }
+  } catch {
+    /* niente dati sul sonno */
+  }
+  return out;
+}
+
+/** Calorie delle sessioni di allenamento registrate da altre app. */
+async function allenamentiPerGiorno(giorni: number): Promise<Map<string, number>> {
+  const out = new Map<string, number>();
+  try {
+    const { workouts } = await Health.queryWorkouts({
+      startDate: giorniFa(giorni),
+      endDate: new Date().toISOString(),
+    });
+    for (const w of workouts) {
+      const k = giorno(w.endDate ?? w.startDate);
+      out.set(k, (out.get(k) ?? 0) + (w.totalEnergyBurned ?? 0));
+    }
+  } catch {
+    /* niente sessioni registrate */
+  }
+  return out;
 }
 
 async function frequenzaRiposo(): Promise<number | null> {
@@ -150,26 +203,41 @@ async function frequenzaRiposo(): Promise<number | null> {
   }
 }
 
-/** Legge peso, passi e calorie attive degli ultimi `giorni` giorni. */
-export async function leggiDati(giorni = 7): Promise<DatiHealth> {
-  const [peso, passi, kcal, fc] = await Promise.all([
+/** Legge peso, passi, calorie, sonno e allenamenti degli ultimi `giorni` giorni. */
+export async function leggiDati(giorni = 14, pesoKg = 75): Promise<DatiHealth> {
+  const [peso, passi, kcal, sonno, allenamenti, fc] = await Promise.all([
     ultimoPeso(),
-    aggregatoGiornaliero('steps', giorni),
-    aggregatoGiornaliero('calories', giorni),
+    sommaPerGiorno('steps', giorni),
+    sommaPerGiorno('calories', giorni),
+    sonnoPerGiorno(giorni),
+    allenamentiPerGiorno(giorni),
     frequenzaRiposo(),
   ]);
 
-  const mappa = new Map<string, GiornoAttivita>();
+  const pesoRif = peso.pesoKg ?? pesoKg;
+  const mappa = new Map<string, GiornoSalute>();
+
+  const tocca = (k: string): GiornoSalute => {
+    const g = mappa.get(k) ?? {
+      data: k,
+      passi: 0,
+      kcalAttive: 0,
+      kcalStimateDaPassi: 0,
+      sonnoMin: 0,
+      kcalAllenamento: 0,
+    };
+    mappa.set(k, g);
+    return g;
+  };
+
   for (const s of passi) {
-    const d = s.startDate.slice(0, 10);
-    mappa.set(d, { data: d, passi: Math.round(s.value), kcalAttive: 0 });
+    const g = tocca(giorno(s.startDate));
+    g.passi = Math.round(s.value);
+    g.kcalStimateDaPassi = kcalDaPassi(g.passi, pesoRif);
   }
-  for (const s of kcal) {
-    const d = s.startDate.slice(0, 10);
-    const g = mappa.get(d) ?? { data: d, passi: 0, kcalAttive: 0 };
-    g.kcalAttive = Math.round(s.value);
-    mappa.set(d, g);
-  }
+  for (const s of kcal) tocca(giorno(s.startDate)).kcalAttive = Math.round(s.value);
+  for (const [k, min] of sonno) tocca(k).sonnoMin = Math.round(min);
+  for (const [k, v] of allenamenti) tocca(k).kcalAllenamento = Math.round(v);
 
   return {
     ...peso,
@@ -194,15 +262,26 @@ export async function apriInformativa(): Promise<void> {
   }
 }
 
-/** Media delle calorie attive giornaliere: utile per confrontarla col TDEE stimato. */
-export function mediaKcalAttive(giorni: GiornoAttivita[]): number | null {
-  const validi = giorni.filter((g) => g.kcalAttive > 0);
-  if (validi.length === 0) return null;
-  return Math.round(validi.reduce((t, g) => t + g.kcalAttive, 0) / validi.length);
+function media(valori: number[]): number | null {
+  const v = valori.filter((x) => x > 0);
+  if (v.length === 0) return null;
+  return Math.round(v.reduce((a, b) => a + b, 0) / v.length);
 }
 
-export function mediaPassi(giorni: GiornoAttivita[]): number | null {
-  const validi = giorni.filter((g) => g.passi > 0);
-  if (validi.length === 0) return null;
-  return Math.round(validi.reduce((t, g) => t + g.passi, 0) / validi.length);
+export function mediaKcalAttive(giorni: GiornoSalute[]): number | null {
+  return media(giorni.map(kcalMovimento));
+}
+
+export function mediaPassi(giorni: GiornoSalute[]): number | null {
+  return media(giorni.map((g) => g.passi));
+}
+
+export function mediaSonnoMin(giorni: GiornoSalute[]): number | null {
+  return media(giorni.map((g) => g.sonnoMin));
+}
+
+export function fmtSonno(minuti: number): string {
+  const h = Math.floor(minuti / 60);
+  const m = Math.round(minuti % 60);
+  return `${h}h ${String(m).padStart(2, '0')}m`;
 }

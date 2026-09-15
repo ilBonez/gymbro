@@ -50,8 +50,8 @@ export default function Storico() {
                 >
                   <div className="min-w-0 flex-1">
                     <h3 className="truncate text-sm font-semibold">{w?.nome ?? s.workoutId}</h3>
-                    <p className="mt-0.5 text-[11px] capitalize text-ink-400">{labelLungo(s.data)}</p>
-                    <div className="mt-2 flex flex-wrap gap-x-3.5 gap-y-1 text-[11px] text-ink-400">
+                    <p className="mt-0.5 text-[11px] capitalize text-muted">{labelLungo(s.data)}</p>
+                    <div className="mt-2 flex flex-wrap gap-x-3.5 gap-y-1 text-[11px] text-muted">
                       <span className="inline-flex items-center gap-1">
                         <Timer size={11} /> {fmtDurata(s.durataSec)}
                       </span>
@@ -61,13 +61,13 @@ export default function Storico() {
                       <span>{serieFatte} serie</span>
                     </div>
                   </div>
-                  <ChevronDown size={17} className={cx('shrink-0 text-ink-400 transition-transform', open && 'rotate-180')} />
+                  <ChevronDown size={17} className={cx('shrink-0 text-muted transition-transform', open && 'rotate-180')} />
                 </button>
 
                 {open && (
-                  <div className="border-t border-ink-700/60 px-3.5 py-3">
+                  <div className="border-t border-line/60 px-3.5 py-3">
                     {s.note && (
-                      <p className="mb-3 rounded-lg bg-ink-800 px-3 py-2 text-xs italic text-ink-300">{s.note}</p>
+                      <p className="mb-3 rounded-lg bg-raise px-3 py-2 text-xs italic text-soft">{s.note}</p>
                     )}
                     <ul className="space-y-2.5">
                       {s.esercizi.map((e, i) => {
