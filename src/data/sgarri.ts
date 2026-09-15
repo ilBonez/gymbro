@@ -10,6 +10,12 @@ export interface Sgarro {
   proteine: number;
   carbs: number;
   grassi: number;
+  /**
+   * Grammi di alcol etilico. Vale 7 kcal/g e non rientra in nessun macro:
+   * senza questo campo le calorie di birra e vino non tornerebbero mai
+   * con la somma di proteine, carboidrati e grassi.
+   */
+  alcol?: number;
   nota?: string;
 }
 
@@ -22,8 +28,8 @@ export const SGARRI: Sgarro[] = [
   { id: 'kebab', nome: 'Kebab con salse', kcal: 950, proteine: 45, carbs: 85, grassi: 47 },
   { id: 'piadina-farcita', nome: 'Piadina farcita', kcal: 600, proteine: 26, carbs: 55, grassi: 30 },
   { id: 'aperitivo', nome: 'Aperitivo con buffet', kcal: 700, proteine: 18, carbs: 65, grassi: 38 },
-  { id: 'birra-media', nome: 'Birra media (400 ml)', kcal: 180, proteine: 2, carbs: 15, grassi: 0, nota: "L'alcol frena l'ossidazione dei grassi per qualche ora." },
-  { id: 'calice-vino', nome: 'Calice di vino (150 ml)', kcal: 125, proteine: 0, carbs: 4, grassi: 0 },
+  { id: 'birra-media', nome: 'Birra media (400 ml)', kcal: 180, proteine: 2, carbs: 15, grassi: 0, alcol: 16, nota: "L'alcol frena l'ossidazione dei grassi per qualche ora." },
+  { id: 'calice-vino', nome: 'Calice di vino (150 ml)', kcal: 125, proteine: 0, carbs: 4, grassi: 0, alcol: 15, nota: 'Quasi tutte le calorie vengono dall’alcol, non dai macro.' },
   { id: 'gelato-medio', nome: 'Gelato (due gusti)', kcal: 320, proteine: 6, carbs: 40, grassi: 15 },
   { id: 'dolce-ristorante', nome: 'Dolce al ristorante', kcal: 480, proteine: 7, carbs: 55, grassi: 25 },
   { id: 'cornetto-cappuccino', nome: 'Cornetto e cappuccino', kcal: 400, proteine: 10, carbs: 48, grassi: 18 },

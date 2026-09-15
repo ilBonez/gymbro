@@ -12,7 +12,8 @@
     "android:open": "npx cap open android",
     "android:apk": "npm run android:sync && cd android && gradlew.bat assembleDebug",
     "check:data": "node scripts/check-data.mjs",
-    "fix:quotes": "node scripts/fix-quotes.mjs src/data/foods.ts src/data/recipes.ts src/data/exercises.ts src/data/programs.ts"
+    "fix:quotes": "node scripts/fix-quotes.mjs src/data/foods.ts src/data/recipes.ts src/data/exercises.ts src/data/programs.ts",
+    "audit:dati": "node scripts/audit-dati.mjs"
   },
   "dependencies": {
     "@capacitor/android": "^8.5.2",

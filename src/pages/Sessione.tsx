@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Navigate } from 'react-router-dom';
 import { Check, ChevronDown, Music, Pause, Play, Plus, SkipForward, Square, TrendingUp, Trophy, X } from 'lucide-react';
 import { useStore } from '../store/useStore';
@@ -27,6 +27,60 @@ function beep(freq = 880, ms = 160) {
   }
 }
 
+/**
+ * Conto alla rovescia del recupero.
+ *
+ * Sta in un componente suo perche' il tick avviene ogni secondo: tenendolo nel
+ * componente padre ridisegnava l'intera lista degli esercizi, e con essa il
+ * ricalcolo dei record su tutto lo storico, sessanta volte al minuto.
+ */
+function Recupero({ secondi, onChiudi }: { secondi: number; onChiudi: () => void }) {
+  const [restano, setRestano] = useState(secondi);
+
+  useEffect(() => {
+    if (restano <= 0) {
+      beep(980, 220);
+      const t = setTimeout(() => beep(1240, 260), 240);
+      const u = setTimeout(onChiudi, 400);
+      return () => {
+        clearTimeout(t);
+        clearTimeout(u);
+      };
+    }
+    const id = setTimeout(() => setRestano((r) => r - 1), 1000);
+    return () => clearTimeout(id);
+  }, [restano, onChiudi]);
+
+  return (
+    <div className="fixed inset-x-0 bottom-0 z-40 safe-bottom">
+      <div className="mx-auto max-w-2xl px-4 pb-4">
+        <div className="rounded-2xl border border-brand-500/40 bg-surface/95 p-4 backdrop-blur-lg animate-in-up">
+          <div className="flex items-center gap-4">
+            <div className="flex-1">
+              <p className="text-[11px] uppercase tracking-wide text-muted">Recupero</p>
+              <p className="text-3xl font-bold tabular-nums text-brandink">
+                {fmtDurata(Math.max(0, restano))}
+              </p>
+            </div>
+            <button
+              onClick={() => setRestano((r) => r + 15)}
+              className="rounded-xl bg-raise px-3 py-2 text-xs font-medium"
+            >
+              +15s
+            </button>
+            <button
+              onClick={onChiudi}
+              className="rounded-xl bg-brand-500 px-3 py-2 text-xs font-semibold text-onbrand"
+            >
+              <SkipForward size={14} className="mr-1 -mt-0.5 inline" /> Salta
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function Sessione() {
   const sessione = useStore((s) => s.sessioneAttiva);
   const aggiornaSerie = useStore((s) => s.aggiornaSerie);
@@ -37,7 +91,7 @@ export default function Sessione() {
 
   const [sec, setSec] = useState(0);
   const [pausa, setPausa] = useState(false);
-  const [recupero, setRecupero] = useState<number | null>(null);
+  const [recupero, setRecupero] = useState<{ secondi: number; k: number } | null>(null);
   const [aperto, setAperto] = useState(0);
   const [fine, setFine] = useState(false);
   const [nota, setNota] = useState('');
@@ -54,33 +108,42 @@ export default function Sessione() {
     if (!sessione) return;
     const t0 = new Date(sessione.iniziata).getTime();
     const id = setInterval(() => {
-      if (!pausaRef.current) setSec(Math.floor((Date.now() - t0) / 1000));
+      if (pausaRef.current) return;
+      const adesso = Math.floor((Date.now() - t0) / 1000);
+      setSec((prec) => (prec === adesso ? prec : adesso));
     }, 500);
     return () => clearInterval(id);
   }, [sessione]);
-
-  useEffect(() => {
-    if (recupero === null) return;
-    if (recupero <= 0) {
-      beep(980, 220);
-      setTimeout(() => beep(1240, 260), 240);
-      setRecupero(null);
-      return;
-    }
-    const id = setTimeout(() => setRecupero((r) => (r === null ? null : r - 1)), 1000);
-    return () => clearTimeout(id);
-  }, [recupero]);
 
   const spunta = useCallback(
     (exIdx: number, setIdx: number, fatto: boolean, recuperoSec: number) => {
       aggiornaSerie(exIdx, setIdx, { fatto });
       if (fatto) {
         beep(660, 90);
-        setRecupero(recuperoSec);
+        setRecupero((r) => ({ secondi: recuperoSec, k: (r?.k ?? 0) + 1 }));
       }
     },
     [aggiornaSerie],
   );
+
+  const chiudiRecupero = useCallback(() => setRecupero(null), []);
+
+  // Le serie completate, in forma di stringa: serve solo a capire quando vale
+  // la pena ricalcolare i record.
+  const firmaSerie = (sessione?.esercizi ?? [])
+    .map((e) => e.serie.map((x) => (x.fatto ? `${x.kg}x${x.reps}` : '-')).join(','))
+    .join('|');
+
+  /**
+   * Cercare i record significa scorrere tutto lo storico. Senza memo lo si
+   * rifarebbe a ogni battuta di tasto e a ogni secondo del cronometro.
+   */
+  const record = useMemo(() => {
+    if (!sessione) return [];
+    return recordBattuti({ ...sessione, completata: true }, sessioniPassate);
+    // firmaSerie e' la vera dipendenza: cambia solo quando cambiano le serie fatte
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [firmaSerie, sessioniPassate, sessione?.workoutId]);
 
   if (!sessione || !w) return <Navigate to={uscita ?? '/allena'} replace />;
 
@@ -89,12 +152,6 @@ export default function Sessione() {
   const volume = sessione.esercizi.reduce(
     (t, e) => t + e.serie.reduce((v, s) => v + (s.fatto ? (s.kg ?? 0) * (s.reps ?? 0) : 0), 0),
     0,
-  );
-
-  // record battuti finora in questa sessione, ricalcolati a ogni serie spuntata
-  const record = recordBattuti(
-    { ...sessione, durataSec: sec, volumeKg: Math.round(volume), completata: true },
-    sessioniPassate,
   );
 
   const termina = () => {
@@ -266,30 +323,7 @@ export default function Sessione() {
       </Button>
 
       {recupero !== null && (
-        <div className="fixed inset-x-0 bottom-0 z-40 safe-bottom">
-          <div className="mx-auto max-w-2xl px-4 pb-4">
-            <div className="rounded-2xl border border-brand-500/40 bg-surface/95 p-4 backdrop-blur-lg animate-in-up">
-              <div className="flex items-center gap-4">
-                <div className="flex-1">
-                  <p className="text-[11px] uppercase tracking-wide text-muted">Recupero</p>
-                  <p className="text-3xl font-bold tabular-nums text-brandink">{fmtDurata(recupero)}</p>
-                </div>
-                <button
-                  onClick={() => setRecupero((r) => (r ?? 0) + 15)}
-                  className="rounded-xl bg-raise px-3 py-2 text-xs font-medium"
-                >
-                  +15s
-                </button>
-                <button
-                  onClick={() => setRecupero(null)}
-                  className="rounded-xl bg-brand-500 px-3 py-2 text-xs font-semibold text-onbrand"
-                >
-                  <SkipForward size={14} className="mr-1 -mt-0.5 inline" /> Salta
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
+        <Recupero key={recupero.k} secondi={recupero.secondi} onChiudi={chiudiRecupero} />
       )}
 
       <MusicaSheet open={musica} onClose={() => setMusica(false)} chiave={w.id} titolo={w.nome} />

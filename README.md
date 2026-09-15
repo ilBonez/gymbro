@@ -89,6 +89,7 @@ account Premium.
 | `npm run build` | controlla i tipi e crea la build in `dist/` |
 | `npm run typecheck` | solo controllo dei tipi |
 | `npm run check:data` | verifica che i riferimenti fra esercizi, programmi, ricette e alimenti risolvano |
+| `npm run audit:dati` | controlla che i numeri tornino: kcal contro macro, ricette contro ingredienti, recuperi contro obiettivo |
 | `npm run android:sync` | build web + copia nel progetto Android |
 | `npm run android:apk` | APK di debug (vedi sotto) |
 

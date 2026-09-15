@@ -60,6 +60,25 @@ Due strade:
 **Actions → APK Android → Run workflow**. L'APK finisce fra gli artifact della run, scaricabile come
 `gymbro-debug-apk`. Non serve nessuna toolchain locale.
 
+## Altri permessi
+
+Il plugin delle notifiche locali aggiunge da solo, al momento del merge dei manifest:
+
+| Permesso | Perché |
+| --- | --- |
+| `POST_NOTIFICATIONS` | obbligatorio da Android 13 per mostrare notifiche; lo chiede l'app al primo uso |
+| `SCHEDULE_EXACT_ALARM` | sveglie puntuali |
+| `RECEIVE_BOOT_COMPLETED` | riprogramma i promemoria dopo un riavvio |
+| `WAKE_LOCK` | serve al sistema per consegnare la notifica |
+
+`SCHEDULE_EXACT_ALARM` è un permesso ad accesso limitato. Qui è giustificato: il promemoria della
+caffeina va dato 40 minuti prima dell'allenamento e una sveglia inesatta, col telefono in Doze tutta la
+notte, può arrivare con ore di ritardo. Per un APK installato a mano non serve nulla; **se l'app
+finisse sul Play Store** quel permesso richiede una dichiarazione d'uso, altrimenti la pubblicazione
+viene rifiutata.
+
+Il plugin del filesystem non aggiunge permessi: scrive in `Documents` tramite lo scoped storage.
+
 ## Health Connect
 
 Nell'APK la schermata **Progressi** legge i dati sanitari del telefono tramite
