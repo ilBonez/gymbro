@@ -1,0 +1,16 @@
+{
+  "name": "GymBro — Allenamento & Dieta",
+  "short_name": "GymBro",
+  "description": "Schede di allenamento, dieta e lista della spesa in un'unica app.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0b0f14",
+  "theme_color": "#0b0f14",
+  "lang": "it",
+  "icons": [
+    { "src": "./icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" },
+    { "src": "./icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "maskable" }
+  ]
+}

@@ -1,0 +1,325 @@
+import { create } from 'zustand';
+import { persist } from 'zustand/middleware';
+import { addDays } from 'date-fns';
+import type {
+  LoggedExercise,
+  PlanDay,
+  Profile,
+  SessionLog,
+  ShoppingItem,
+  WeightEntry,
+} from '../types';
+import { PROGRAMS } from '../data/programs';
+import type { Meal } from '../data/recipes';
+import { key } from '../lib/date';
+import { STACK_MATTINA_PRESTO } from '../data/supplements';
+
+export interface MealEntry {
+  id: string;
+  data: string;
+  momento: Meal;
+  recipeId?: string;
+  nome: string;
+  porzioni: number;
+  kcal: number;
+  proteine: number;
+  carbs: number;
+  grassi: number;
+}
+
+interface State {
+  profile: Profile | null;
+  pesi: WeightEntry[];
+  piano: Record<string, PlanDay>;
+  sessioni: SessionLog[];
+  sessioneAttiva: SessionLog | null;
+  spesa: ShoppingItem[];
+  integratoriAttivi: string[];
+  logIntegratori: Record<string, boolean>;
+  pasti: MealEntry[];
+  preferiti: string[];
+  onboardingFatto: boolean;
+
+  setProfile: (p: Profile) => void;
+  aggiornaProfilo: (patch: Partial<Profile>) => void;
+  completaOnboarding: () => void;
+  resetTutto: () => void;
+
+  addPeso: (e: Omit<WeightEntry, 'id'>) => void;
+  removePeso: (id: string) => void;
+
+  setGiorno: (d: PlanDay) => void;
+  svuotaGiorno: (data: string) => void;
+  applicaProgramma: (programId: string, dataInizio: string, settimane: number) => void;
+  svuotaPiano: () => void;
+
+  iniziaSessione: (programId: string, workoutId: string, esercizi: LoggedExercise[]) => void;
+  aggiornaSerie: (
+    exIdx: number,
+    setIdx: number,
+    patch: Partial<{ reps: number | null; kg: number | null; fatto: boolean }>,
+  ) => void;
+  aggiungiSerie: (exIdx: number) => void;
+  notaEsercizio: (exIdx: number, nota: string) => void;
+  concludiSessione: (durataSec: number, nota?: string) => void;
+  annullaSessione: () => void;
+
+  addSpesa: (i: Omit<ShoppingItem, 'id'>) => void;
+  toggleSpesa: (id: string) => void;
+  removeSpesa: (id: string) => void;
+  svuotaSpesa: (soloPresi?: boolean) => void;
+  aggiungiListaSpesa: (items: Omit<ShoppingItem, 'id'>[]) => number;
+
+  toggleIntegratore: (id: string) => void;
+  segnaIntegratore: (data: string, id: string, preso: boolean) => void;
+
+  addPasto: (m: Omit<MealEntry, 'id'>) => void;
+  removePasto: (id: string) => void;
+
+  togglePreferito: (exerciseId: string) => void;
+}
+
+const uid = () => Math.random().toString(36).slice(2, 10);
+
+export const useStore = create<State>()(
+  persist(
+    (set, get) => ({
+      profile: null,
+      pesi: [],
+      piano: {},
+      sessioni: [],
+      sessioneAttiva: null,
+      spesa: [],
+      integratoriAttivi: STACK_MATTINA_PRESTO,
+      logIntegratori: {},
+      pasti: [],
+      preferiti: [],
+      onboardingFatto: false,
+
+      setProfile: (p) =>
+        set((s) => ({
+          profile: p,
+          pesi:
+            s.pesi.length === 0
+              ? [{ id: uid(), data: key(new Date()), pesoKg: p.pesoKg }]
+              : s.pesi,
+        })),
+
+      aggiornaProfilo: (patch) =>
+        set((s) => (s.profile ? { profile: { ...s.profile, ...patch } } : {})),
+
+      completaOnboarding: () => set({ onboardingFatto: true }),
+
+      resetTutto: () =>
+        set({
+          profile: null,
+          pesi: [],
+          piano: {},
+          sessioni: [],
+          sessioneAttiva: null,
+          spesa: [],
+          pasti: [],
+          logIntegratori: {},
+          preferiti: [],
+          onboardingFatto: false,
+        }),
+
+      addPeso: (e) =>
+        set((s) => {
+          const pesi = [...s.pesi.filter((p) => p.data !== e.data), { ...e, id: uid() }].sort(
+            (a, b) => a.data.localeCompare(b.data),
+          );
+          const ultimo = pesi[pesi.length - 1];
+          return {
+            pesi,
+            profile: s.profile ? { ...s.profile, pesoKg: ultimo.pesoKg } : s.profile,
+          };
+        }),
+
+      removePeso: (id) => set((s) => ({ pesi: s.pesi.filter((p) => p.id !== id) })),
+
+      setGiorno: (d) => set((s) => ({ piano: { ...s.piano, [d.data]: d } })),
+
+      svuotaGiorno: (data) =>
+        set((s) => {
+          const piano = { ...s.piano };
+          delete piano[data];
+          return { piano };
+        }),
+
+      applicaProgramma: (programId, dataInizio, settimane) => {
+        const prog = PROGRAMS.find((p) => p.id === programId);
+        if (!prog) return;
+        const piano = { ...get().piano };
+        const start = new Date(dataInizio + 'T00:00:00');
+
+        // quante volte una stessa etichetta e' gia' stata usata: serve a ruotare
+        // fra piu' schede che iniziano allo stesso modo (Push A / Push B)
+        const usi = new Map<string, number>();
+
+        for (let g = 0; g < settimane * 7; g++) {
+          const d = addDays(start, g);
+          // splitSuggerito e' indicizzato per giorno della settimana: 0 = lunedi
+          const indiceSettimana = (d.getDay() + 6) % 7;
+          const etichetta = prog.splitSuggerito[indiceSettimana] ?? 'Riposo';
+          const lab = normalizza(etichetta);
+
+          const candidati = prog.workouts.filter((x) => {
+            const nome = normalizza(x.nome);
+            return nome.startsWith(lab) || lab.startsWith(nome);
+          });
+
+          let match: (typeof prog.workouts)[number] | undefined;
+          if (candidati.length > 0) {
+            const usati = usi.get(lab) ?? 0;
+            match = candidati[usati % candidati.length];
+            usi.set(lab, usati + 1);
+          }
+
+          // un'etichetta di solo cardio o riposo non deve mai ricevere una scheda pesi
+          const senzaPesi = !match && /ripos|cardio|liss|hiit|camminat|recuper/i.test(etichetta);
+
+          piano[key(d)] = {
+            data: key(d),
+            programId,
+            workoutId: match?.id ?? null,
+            cardio:
+              !match && prog.cardio && /cardio|liss|hiit|camminat/i.test(etichetta)
+                ? { tipo: prog.cardio.tipo, durataMin: prog.cardio.durataMin }
+                : null,
+            note: !match && !senzaPesi ? etichetta : undefined,
+          };
+        }
+        set({ piano });
+      },
+
+      svuotaPiano: () => set({ piano: {} }),
+
+      iniziaSessione: (programId, workoutId, esercizi) =>
+        set({
+          sessioneAttiva: {
+            id: uid(),
+            data: key(new Date()),
+            iniziata: new Date().toISOString(),
+            durataSec: 0,
+            programId,
+            workoutId,
+            esercizi,
+            volumeKg: 0,
+            completata: false,
+          },
+        }),
+
+      aggiornaSerie: (exIdx, setIdx, patch) =>
+        set((s) => {
+          if (!s.sessioneAttiva) return {};
+          const esercizi = s.sessioneAttiva.esercizi.map((ex, i) =>
+            i !== exIdx
+              ? ex
+              : {
+                  ...ex,
+                  serie: ex.serie.map((st, j) => (j === setIdx ? { ...st, ...patch } : st)),
+                },
+          );
+          return { sessioneAttiva: { ...s.sessioneAttiva, esercizi } };
+        }),
+
+      aggiungiSerie: (exIdx) =>
+        set((s) => {
+          if (!s.sessioneAttiva) return {};
+          const esercizi = s.sessioneAttiva.esercizi.map((ex, i) => {
+            if (i !== exIdx) return ex;
+            const ultima = ex.serie[ex.serie.length - 1];
+            return {
+              ...ex,
+              serie: [
+                ...ex.serie,
+                { reps: ultima?.reps ?? null, kg: ultima?.kg ?? null, fatto: false },
+              ],
+            };
+          });
+          return { sessioneAttiva: { ...s.sessioneAttiva, esercizi } };
+        }),
+
+      notaEsercizio: (exIdx, nota) =>
+        set((s) => {
+          if (!s.sessioneAttiva) return {};
+          const esercizi = s.sessioneAttiva.esercizi.map((ex, i) =>
+            i === exIdx ? { ...ex, note: nota } : ex,
+          );
+          return { sessioneAttiva: { ...s.sessioneAttiva, esercizi } };
+        }),
+
+      concludiSessione: (durataSec, nota) =>
+        set((s) => {
+          const a = s.sessioneAttiva;
+          if (!a) return {};
+          const volumeKg = a.esercizi.reduce(
+            (tot, ex) =>
+              tot + ex.serie.reduce((v, st) => v + (st.fatto ? (st.kg ?? 0) * (st.reps ?? 0) : 0), 0),
+            0,
+          );
+          const fatta: SessionLog = {
+            ...a,
+            durataSec,
+            conclusa: new Date().toISOString(),
+            volumeKg: Math.round(volumeKg),
+            completata: true,
+            note: nota,
+          };
+          return { sessioni: [fatta, ...s.sessioni], sessioneAttiva: null };
+        }),
+
+      annullaSessione: () => set({ sessioneAttiva: null }),
+
+      addSpesa: (i) => set((s) => ({ spesa: [...s.spesa, { ...i, id: uid() }] })),
+
+      toggleSpesa: (id) =>
+        set((s) => ({ spesa: s.spesa.map((i) => (i.id === id ? { ...i, preso: !i.preso } : i)) })),
+
+      removeSpesa: (id) => set((s) => ({ spesa: s.spesa.filter((i) => i.id !== id) })),
+
+      svuotaSpesa: (soloPresi) =>
+        set((s) => ({ spesa: soloPresi ? s.spesa.filter((i) => !i.preso) : [] })),
+
+      aggiungiListaSpesa: (items) => {
+        const esistenti = new Set(get().spesa.map((i) => i.nome.toLowerCase()));
+        const nuovi = items
+          .filter((i) => !esistenti.has(i.nome.toLowerCase()))
+          .map((i) => ({ ...i, id: uid() }));
+        set((s) => ({ spesa: [...s.spesa, ...nuovi] }));
+        return nuovi.length;
+      },
+
+      toggleIntegratore: (id) =>
+        set((s) => ({
+          integratoriAttivi: s.integratoriAttivi.includes(id)
+            ? s.integratoriAttivi.filter((x) => x !== id)
+            : [...s.integratoriAttivi, id],
+        })),
+
+      segnaIntegratore: (data, id, preso) =>
+        set((s) => ({ logIntegratori: { ...s.logIntegratori, [data + '|' + id]: preso } })),
+
+      addPasto: (m) => set((s) => ({ pasti: [...s.pasti, { ...m, id: uid() }] })),
+
+      removePasto: (id) => set((s) => ({ pasti: s.pasti.filter((p) => p.id !== id) })),
+
+      togglePreferito: (exerciseId) =>
+        set((s) => ({
+          preferiti: s.preferiti.includes(exerciseId)
+            ? s.preferiti.filter((x) => x !== exerciseId)
+            : [...s.preferiti, exerciseId],
+        })),
+    }),
+    { name: 'gymbro-v1' },
+  ),
+);
+
+function normalizza(v: string): string {
+  return v
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[̀-ͯ]/g, '')
+    .replace(/[^a-z0-9]/g, '');
+}
