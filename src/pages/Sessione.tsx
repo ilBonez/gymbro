@@ -1,12 +1,19 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Navigate } from 'react-router-dom';
-import { Check, ChevronDown, Music, Pause, Play, Plus, SkipForward, Square, TrendingUp, Trophy, X } from 'lucide-react';
+import { Check, ChevronDown, Music, Pause, Play, Plus, Repeat, SkipForward, Square, TrendingUp, Trophy, X } from 'lucide-react';
 import { useStore } from '../store/useStore';
 import { esercizio, scheda } from '../lib/catalog';
 import { Button, Card, Sheet, Tag, cx, inputCls } from '../components/ui';
 import { fmtDurata } from '../lib/date';
 import { MusicaSheet } from '../components/MusicaSheet';
-import { recordBattuti, suggerimentoCarico, ultimaEsecuzione } from '../lib/progressione';
+import {
+  recordBattuti,
+  secondiRichiesti,
+  suggerimentoCarico,
+  ultimaEsecuzione,
+} from '../lib/progressione';
+import { CambiaEsercizio } from '../components/CambiaEsercizio';
+import { SerieATempo } from '../components/SerieATempo';
 
 function beep(freq = 880, ms = 160) {
   try {
@@ -88,6 +95,7 @@ export default function Sessione() {
   const concludi = useStore((s) => s.concludiSessione);
   const sessioniPassate = useStore((s) => s.sessioni);
   const annulla = useStore((s) => s.annullaSessione);
+  const sostituisci = useStore((s) => s.sostituisciEsercizio);
 
   const [sec, setSec] = useState(0);
   const [pausa, setPausa] = useState(false);
@@ -99,6 +107,7 @@ export default function Sessione() {
   // dello store fa scattare il redirect di fallback prima della navigazione
   const [uscita, setUscita] = useState<string | null>(null);
   const [musica, setMusica] = useState(false);
+  const [cambio, setCambio] = useState<number | null>(null);
   const pausaRef = useRef(pausa);
   pausaRef.current = pausa;
 
@@ -211,6 +220,8 @@ export default function Sessione() {
           const info = esercizio(ex.exerciseId);
           const complete = ex.serie.every((s) => s.fatto);
           const open = aperto === i;
+          // plank, hollow hold e simili si misurano in secondi, non in ripetizioni
+          const secondi = def ? secondiRichiesti(def.ripetizioni) : null;
           return (
             <Card key={ex.exerciseId + i} className={cx('!p-0 overflow-hidden', complete && '!border-brand-500/40')}>
               <button
@@ -234,6 +245,16 @@ export default function Sessione() {
                 </span>
                 <ChevronDown size={17} className={cx('shrink-0 text-muted transition-transform', open && 'rotate-180')} />
               </button>
+
+              {open && (
+                <button
+                  onClick={() => setCambio(i)}
+                  className="flex w-full items-center gap-1.5 border-t border-line/60 px-4 py-2 text-[11px] text-muted"
+                >
+                  <Repeat size={12} />
+                  Macchina occupata? Cambia esercizio
+                </button>
+              )}
 
               {open && (
                 <div className="border-t border-line/60 px-4 py-3">
@@ -262,7 +283,7 @@ export default function Sessione() {
                   <div className="mb-1.5 grid grid-cols-[28px_1fr_1fr_44px] gap-2 text-[10px] uppercase tracking-wide text-muted">
                     <span>#</span>
                     <span>Kg</span>
-                    <span>Rip.</span>
+                    <span>{secondi !== null ? 'Tempo' : 'Rip.'}</span>
                     <span className="text-right">Ok</span>
                   </div>
                   <div className="space-y-2">
@@ -280,16 +301,34 @@ export default function Sessione() {
                           }
                           className={cx(inputCls, '!py-2 text-center tabular-nums')}
                         />
-                        <input
-                          type="number"
-                          inputMode="numeric"
-                          placeholder={def?.ripetizioni ?? '—'}
-                          value={s.reps ?? ''}
-                          onChange={(e) =>
-                            aggiornaSerie(i, j, { reps: e.target.value === '' ? null : +e.target.value })
-                          }
-                          className={cx(inputCls, '!py-2 text-center tabular-nums')}
-                        />
+                        {secondi !== null ? (
+                          <SerieATempo
+                            secondiTarget={secondi}
+                            fatto={s.fatto}
+                            secondiFatti={s.reps}
+                            beep={() => beep(980, 220)}
+                            onFine={(sec) => {
+                              aggiornaSerie(i, j, { reps: sec, fatto: true });
+                              setRecupero((r) => ({
+                                secondi: def?.recuperoSec ?? 60,
+                                k: (r?.k ?? 0) + 1,
+                              }));
+                            }}
+                          />
+                        ) : (
+                          <input
+                            type="number"
+                            inputMode="numeric"
+                            placeholder={def?.ripetizioni ?? '—'}
+                            value={s.reps ?? ''}
+                            onChange={(e) =>
+                              aggiornaSerie(i, j, {
+                                reps: e.target.value === '' ? null : +e.target.value,
+                              })
+                            }
+                            className={cx(inputCls, '!py-2 text-center tabular-nums')}
+                          />
+                        )}
                         <button
                           onClick={() => spunta(i, j, !s.fatto, def?.recuperoSec ?? 90)}
                           className={cx(
@@ -324,6 +363,15 @@ export default function Sessione() {
 
       {recupero !== null && (
         <Recupero key={recupero.k} secondi={recupero.secondi} onChiudi={chiudiRecupero} />
+      )}
+
+      {cambio !== null && sessione.esercizi[cambio] && (
+        <CambiaEsercizio
+          open
+          onClose={() => setCambio(null)}
+          exerciseId={sessione.esercizi[cambio].exerciseId}
+          onScegli={(nuovoId) => sostituisci(cambio, nuovoId)}
+        />
       )}
 
       <MusicaSheet open={musica} onClose={() => setMusica(false)} chiave={w.id} titolo={w.nome} />

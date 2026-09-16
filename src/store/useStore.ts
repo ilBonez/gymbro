@@ -106,6 +106,7 @@ interface State {
     patch: Partial<{ reps: number | null; kg: number | null; fatto: boolean }>,
   ) => void;
   aggiungiSerie: (exIdx: number) => void;
+  sostituisciEsercizio: (exIdx: number, nuovoId: string) => void;
   notaEsercizio: (exIdx: number, nota: string) => void;
   concludiSessione: (durataSec: number, nota?: string) => void;
   annullaSessione: () => void;
@@ -318,6 +319,22 @@ export const useStore = create<State>()(
               ],
             };
           });
+          return { sessioneAttiva: { ...s.sessioneAttiva, esercizi } };
+        }),
+
+      sostituisciEsercizio: (exIdx, nuovoId) =>
+        set((s) => {
+          if (!s.sessioneAttiva) return {};
+          // le serie restano, i carichi no: sono di un altro esercizio
+          const esercizi = s.sessioneAttiva.esercizi.map((ex, i) =>
+            i === exIdx
+              ? {
+                  exerciseId: nuovoId,
+                  serie: ex.serie.map(() => ({ reps: null, kg: null, fatto: false })),
+                  note: ex.note,
+                }
+              : ex,
+          );
           return { sessioneAttiva: { ...s.sessioneAttiva, esercizi } };
         }),
 

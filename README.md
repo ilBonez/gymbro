@@ -43,11 +43,11 @@ tutti gli effetti e continua a funzionare offline.
 | --- | --- |
 | **Home** | Allenamento di oggi, macro della giornata, checklist integratori, peso |
 | **Allena** | 4 programmi (definizione low carb, forza, massa, mantenimento), 16 schede, 86 esercizi con esecuzione ed errori comuni |
-| **Sessione** | Timer, log di serie/carico/ripetizioni, carico suggerito dalla progressione, record personali, recupero con beep, playlist Spotify |
+| **Sessione** | Timer, log di serie/carico/ripetizioni, carico suggerito, record personali, conto alla rovescia per plank e simili, cambio esercizio al volo, playlist Spotify |
 | **Piano** | Calendario: stendi un programma su più settimane (anche solo lun-ven), calorie e passi giorno per giorno |
 | **Dieta** | Menu generato sui tuoi macro da 54 ricette, diario pasti (anche a mano o "sgarro"), ricettario, tabella sostituzioni |
 | **Spesa** | Lista dei 7 giorni raggruppata per reparto, con link di ricerca Eurospin |
-| **Progressi** | Peso, circonferenze, massa grassa stimata, serie settimanali per gruppo muscolare, anelli di movimento/passi/sonno da Health Connect |
+| **Progressi** | Peso con tendenza a 7 giorni, aderenza alla dieta incrociata col peso, segnale di scarico, circonferenze, serie per gruppo muscolare, anelli da Health Connect |
 
 Calorie e macro: metabolismo basale con Mifflin-St Jeor, TDEE per livello di attività, macro per
 obiettivo (le regole stanno in [`src/lib/nutrition.ts`](src/lib/nutrition.ts)). Il blocco low carb è
@@ -56,6 +56,14 @@ limitato a 4-6 settimane e l'app avvisa quando è ora di smettere.
 **Progressione dei carichi:** a ogni seduta l'app propone il peso da usare con la regola della doppia
 progressione — si sale solo dopo aver chiuso tutte le serie al tetto dell'intervallo, si cala dopo due
 serie sotto il minimo. Tiene il massimale stimato (Epley) per esercizio, il suo andamento e i record.
+
+**Aderenza:** la scheda Progressi incrocia i pasti registrati con le pesate e dice cosa è successo
+davvero — *"in media 2.328 kcal contro 2.106 di target, il peso è sceso di 0,5 kg contro i 0,58 attesi"*.
+Con meno di quattro giorni registrati lo dichiara invece di tirare conclusioni.
+
+**Scarico:** l'app guarda l'andamento del massimale stimato sui multiarticolari. Se cala di oltre il 3%
+o resta fermo per quattro settimane lo dice, perché in definizione la perdita di forza è il segnale per
+chiudere il blocco.
 
 **Backup:** i dati stanno solo sul dispositivo, quindi l'app ne salva una copia al giorno in
 `Documenti/GymBro` tenendo gli ultimi sette file. Dal profilo si ripristina da file, con anteprima e

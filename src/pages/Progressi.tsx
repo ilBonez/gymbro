@@ -8,6 +8,8 @@ import { bmi, bmiCategoria, pesoIdealeRange, variazionePesoAttesa } from '../lib
 import { useTargets } from '../lib/useTargets';
 import { HealthCard } from '../components/HealthCard';
 import { VolumeMuscolare } from '../components/VolumeMuscolare';
+import { Aderenza } from '../components/Aderenza';
+import { Deload } from '../components/Deload';
 import { CIRCONFERENZE } from '../types';
 import { massaGrassaNavy } from '../lib/nutrition';
 import { coloreTema } from '../lib/theme';
@@ -40,8 +42,25 @@ export default function Progressi() {
   const [bf, setBf] = useState('');
   const [misure, setMisure] = useState<Record<string, string>>({});
 
+  /**
+   * Il peso oscilla di 1-2 kg al giorno per acqua, sale e glicogeno: da solo il
+   * punto grezzo non dice niente. La media mobile a 7 giorni e' la linea che
+   * conta davvero, e va guardata su due o tre settimane.
+   */
   const serie = useMemo(
-    () => pesi.map((p) => ({ data: p.data.slice(5), peso: p.pesoKg, vita: p.vitaCm })),
+    () =>
+      pesi.map((p, i) => {
+        const finestra = pesi.filter(
+          (q, j) => j <= i && giorniTra(q.data, p.data) < 7,
+        );
+        const media = finestra.reduce((t, q) => t + q.pesoKg, 0) / Math.max(finestra.length, 1);
+        return {
+          data: p.data.slice(5),
+          peso: p.pesoKg,
+          media: +media.toFixed(2),
+          vita: p.vitaCm,
+        };
+      }),
     [pesi],
   );
 
@@ -161,16 +180,34 @@ export default function Progressi() {
               <Line
                 type="monotone"
                 dataKey="peso"
+                stroke={colori.testo}
+                strokeWidth={1}
+                strokeDasharray="3 3"
+                dot={{ r: 2, fill: colori.testo }}
+                activeDot={{ r: 4 }}
+                name="Pesata"
+              />
+              <Line
+                type="monotone"
+                dataKey="media"
                 stroke={colori.brand}
                 strokeWidth={2.5}
-                dot={{ r: 2.5, fill: colori.brand }}
+                dot={false}
                 activeDot={{ r: 5 }}
-                name="Peso (kg)"
+                name="Tendenza 7 giorni"
               />
             </LineChart>
           </ResponsiveContainer>
+          <p className="px-3 pb-1 pt-2 text-[10px] leading-relaxed text-muted">
+            La linea piena è la media degli ultimi 7 giorni: è quella da guardare. I puntini
+            tratteggiati sono le pesate singole, che oscillano di 1-2 kg per acqua e sale.
+          </p>
         </Card>
       )}
+
+      <Aderenza />
+
+      <Deload />
 
       {sessioni.length > 0 && (
         <>

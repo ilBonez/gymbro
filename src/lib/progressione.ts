@@ -116,6 +116,17 @@ export function recordBattuti(sessione: SessionLog, precedenti: SessionLog[]): R
   return out;
 }
 
+/**
+ * Secondi richiesti, per gli esercizi che si misurano a tempo invece che a
+ * ripetizioni: plank, hollow hold, camminate del contadino. Restituisce il
+ * valore alto dell'intervallo, che e' quello a cui puntare.
+ */
+export function secondiRichiesti(v: string): number | null {
+  const m = v.trim().toLowerCase().match(/^(\d+)(?:\s*[-–]\s*(\d+))?\s*s(ec)?$/);
+  if (!m) return null;
+  return parseInt(m[2] ?? m[1], 10);
+}
+
 /** Intervallo di ripetizioni richiesto, quando la scheda ne indica uno. */
 export function intervalloRipetizioni(v: string): { min: number; max: number } | null {
   const pulito = v.trim().toLowerCase();
