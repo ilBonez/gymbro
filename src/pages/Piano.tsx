@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useNumeroUrl } from '../lib/urlState';
 import { Link } from 'react-router-dom';
 import { addDays, isSameDay } from 'date-fns';
 import { CalendarRange, ChevronLeft, ChevronRight, Dumbbell, Flame, Footprints, HeartPulse, Moon, Trash2, UtensilsCrossed } from 'lucide-react';
@@ -19,7 +20,7 @@ export default function Piano() {
   const svuotaPiano = useStore((s) => s.svuotaPiano);
   const targets = useTargets(true);
 
-  const [offset, setOffset] = useState(0);
+  const [offset, setOffset] = useNumeroUrl('sett', 0);
   const [sel, setSel] = useState<string | null>(null);
 
   const base = addDays(inizioSettimana(), offset * 7);
@@ -50,7 +51,7 @@ export default function Piano() {
       </div>
 
       <div className="mt-4 flex items-center justify-between rounded-2xl border border-line/70 bg-surface px-2 py-2">
-        <button onClick={() => setOffset((o) => o - 1)} className="rounded-lg p-2 text-soft hover:bg-raise">
+        <button onClick={() => setOffset(offset - 1)} className="rounded-lg p-2 text-soft hover:bg-raise">
           <ChevronLeft size={18} />
         </button>
         <div className="text-center">
@@ -59,7 +60,7 @@ export default function Piano() {
             {offset === 0 ? 'Settimana corrente' : 'Torna a oggi'}
           </button>
         </div>
-        <button onClick={() => setOffset((o) => o + 1)} className="rounded-lg p-2 text-soft hover:bg-raise">
+        <button onClick={() => setOffset(offset + 1)} className="rounded-lg p-2 text-soft hover:bg-raise">
           <ChevronRight size={18} />
         </button>
       </div>

@@ -1,10 +1,11 @@
-import { useMemo, useState } from 'react';
+import { useMemo } from 'react';
 import { ChevronLeft, ChevronRight, UtensilsCrossed } from 'lucide-react';
 import { useStore } from '../store/useStore';
 import { useTargets } from '../lib/useTargets';
 import { analizzaSettimana, etichettaSettimana, settimaneDisponibili } from '../lib/aderenza';
 import { Card, Empty, SectionTitle, cx } from './ui';
 import { GIORNI_IT } from '../lib/date';
+import { useNumeroUrl } from '../lib/urlState';
 
 /** Quanto ha seguito la dieta questa settimana, e cosa ne è venuto fuori sul peso. */
 export function Aderenza() {
@@ -14,7 +15,7 @@ export function Aderenza() {
   const pesi = useStore((s) => s.pesi);
   const targets = useTargets(true);
 
-  const [offset, setOffset] = useState(0);
+  const [offset, setOffset] = useNumeroUrl('sett', 0);
   const maxIndietro = useMemo(() => settimaneDisponibili(pasti), [pasti]);
 
   const a = useMemo(
@@ -32,7 +33,7 @@ export function Aderenza() {
         action={
           <div className="flex items-center gap-1">
             <button
-              onClick={() => setOffset((o) => Math.max(-(maxIndietro - 1), o - 1))}
+              onClick={() => setOffset(Math.max(-(maxIndietro - 1), offset - 1))}
               disabled={offset <= -(maxIndietro - 1)}
               className="rounded p-1 text-muted disabled:opacity-30"
               aria-label="Settimana precedente"
@@ -43,7 +44,7 @@ export function Aderenza() {
               {etichettaSettimana(offset)}
             </span>
             <button
-              onClick={() => setOffset((o) => Math.min(0, o + 1))}
+              onClick={() => setOffset(Math.min(0, offset + 1))}
               disabled={offset >= 0}
               className="rounded p-1 text-muted disabled:opacity-30"
               aria-label="Settimana successiva"

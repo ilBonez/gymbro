@@ -259,9 +259,12 @@ export default function Dashboard() {
           <Timer size={19} className="mx-auto text-brandink" />
           <span className="mt-1.5 block text-xs font-medium">Storico</span>
         </Link>
-        <Link to="/progressi" className="rounded-2xl border border-line/70 bg-surface p-3.5 text-center">
+        <Link
+          to="/progressi/dieta"
+          className="rounded-2xl border border-line/70 bg-surface p-3.5 text-center"
+        >
           <Scale size={19} className="mx-auto text-brandink" />
-          <span className="mt-1.5 block text-xs font-medium">Pesati</span>
+          <span className="mt-1.5 block text-xs font-medium">Aderenza</span>
         </Link>
       </div>
 

@@ -1,8 +1,9 @@
 import { Link } from 'react-router-dom';
-import { BookOpen, ChevronRight, Clock, Dumbbell, HeartPulse, Layers } from 'lucide-react';
+import { ChevronRight, Clock, Dumbbell, HeartPulse, Layers } from 'lucide-react';
 import { PROGRAMS } from '../data/programs';
 import { useStore } from '../store/useStore';
 import { Card, SectionTitle, Tag, cx } from '../components/ui';
+import { NAV_ALLENA, SottoNav } from '../components/SottoNav';
 import { GOAL_RULES } from '../lib/nutrition';
 
 export default function Allena() {
@@ -15,23 +16,10 @@ export default function Allena() {
   return (
     <div>
       <h1 className="text-2xl font-bold tracking-tight">Allenamento</h1>
+      <SottoNav voci={NAV_ALLENA} />
       <p className="mt-1 text-sm text-muted">
         Quattro blocchi pronti. Scegline uno e appoggialo sul calendario.
       </p>
-
-      <Link
-        to="/esercizi"
-        className="mt-4 flex items-center gap-3 rounded-2xl border border-line/70 bg-surface px-4 py-3.5"
-      >
-        <span className="grid h-9 w-9 place-items-center rounded-xl bg-brand-500/12 text-brandink">
-          <BookOpen size={17} />
-        </span>
-        <span className="flex-1">
-          <span className="block text-sm font-semibold">Libreria esercizi</span>
-          <span className="block text-xs text-muted">Schede, esecuzione, errori, alternative</span>
-        </span>
-        <ChevronRight size={17} className="text-muted" />
-      </Link>
 
       <SectionTitle>Programmi</SectionTitle>
       <div className="space-y-3">

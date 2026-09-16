@@ -3,6 +3,7 @@ import { ChevronDown, Dumbbell, Timer, Weight } from 'lucide-react';
 import { useStore } from '../store/useStore';
 import { nomeEsercizio, scheda } from '../lib/catalog';
 import { Card, Empty, Stat, Tag, cx } from '../components/ui';
+import { NAV_ALLENA, SottoNav } from '../components/SottoNav';
 import { fmtDurata, giorniTra, labelLungo, oggi } from '../lib/date';
 
 export default function Storico() {
@@ -16,6 +17,7 @@ export default function Storico() {
   return (
     <div>
       <h1 className="text-2xl font-bold tracking-tight">Storico allenamenti</h1>
+      <SottoNav voci={NAV_ALLENA} />
 
       <div className="mt-4 grid grid-cols-3 gap-2.5">
         <Stat label="Sedute" value={sessioni.length} sub={`${settimana.length} questa sett.`} />

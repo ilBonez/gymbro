@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useMemo } from 'react';
 import { ArrowLeftRight } from 'lucide-react';
 import {
   ETICHETTA_GRUPPO,
@@ -8,6 +8,7 @@ import {
 } from '../lib/equivalenze';
 import type { GruppoMacro } from '../lib/equivalenze';
 import { Card, Chip, Field, cx, inputCls } from './ui';
+import { useNumeroUrl, useParametroUrl } from '../lib/urlState';
 
 const GRUPPI: GruppoMacro[] = ['carbs', 'proteine', 'grassi'];
 
@@ -19,9 +20,10 @@ const PREDEFINITI: Record<GruppoMacro, { id: string; grammi: number }> = {
 
 /** Tabella di sostituzione: stessa quantità di un macro, alimenti diversi. */
 export function Sostituzioni() {
-  const [gruppo, setGruppo] = useState<GruppoMacro>('carbs');
-  const [rifId, setRifId] = useState(PREDEFINITI.carbs.id);
-  const [grammi, setGrammi] = useState(PREDEFINITI.carbs.grammi);
+  const [gruppoRaw, setGruppoUrl] = useParametroUrl('gruppo', 'carbs');
+  const gruppo = gruppoRaw as GruppoMacro;
+  const [rifId, setRifId] = useParametroUrl('da', PREDEFINITI[gruppo]?.id ?? PREDEFINITI.carbs.id);
+  const [grammi, setGrammi] = useNumeroUrl('g', PREDEFINITI[gruppo]?.grammi ?? 80);
 
   const alimenti = useMemo(() => alimentiDelGruppo(gruppo), [gruppo]);
   const risultato = useMemo(
@@ -30,7 +32,7 @@ export function Sostituzioni() {
   );
 
   const cambiaGruppo = (g: GruppoMacro) => {
-    setGruppo(g);
+    setGruppoUrl(g);
     setRifId(PREDEFINITI[g].id);
     setGrammi(PREDEFINITI[g].grammi);
   };

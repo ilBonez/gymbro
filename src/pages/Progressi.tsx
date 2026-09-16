@@ -7,9 +7,7 @@ import { giorniTra, oggi } from '../lib/date';
 import { bmi, bmiCategoria, pesoIdealeRange, variazionePesoAttesa } from '../lib/nutrition';
 import { useTargets } from '../lib/useTargets';
 import { HealthCard } from '../components/HealthCard';
-import { VolumeMuscolare } from '../components/VolumeMuscolare';
-import { Aderenza } from '../components/Aderenza';
-import { Deload } from '../components/Deload';
+import { NAV_PROGRESSI, SottoNav } from '../components/SottoNav';
 import { CIRCONFERENZE } from '../types';
 import { massaGrassaNavy } from '../lib/nutrition';
 import { coloreTema } from '../lib/theme';
@@ -19,7 +17,6 @@ export default function Progressi() {
   const pesi = useStore((s) => s.pesi);
   const addPeso = useStore((s) => s.addPeso);
   const removePeso = useStore((s) => s.removePeso);
-  const sessioni = useStore((s) => s.sessioni);
   const targets = useTargets(true);
 
   const tema = useStore((s) => s.tema);
@@ -64,19 +61,6 @@ export default function Progressi() {
     [pesi],
   );
 
-  const volumeSettimane = useMemo(() => {
-    const m = new Map<number, number>();
-    for (const s of sessioni) {
-      const w = Math.floor(giorniTra(s.data, oggi()) / 7);
-      if (w > 11) continue;
-      m.set(w, (m.get(w) ?? 0) + s.volumeKg);
-    }
-    return Array.from({ length: 12 }, (_, i) => ({
-      data: i === 0 ? 'ora' : `-${i}s`,
-      volume: m.get(i) ?? 0,
-    })).reverse();
-  }, [sessioni]);
-
   if (!profile || !targets) return null;
 
   const primo = pesi[0];
@@ -101,14 +85,13 @@ export default function Progressi() {
   return (
     <div>
       <div className="flex items-start justify-between gap-3">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">Progressi</h1>
-          <p className="mt-1 text-sm text-muted">Peso, misure e volume di allenamento.</p>
-        </div>
+        <h1 className="text-2xl font-bold tracking-tight">Progressi</h1>
         <Button onClick={() => setSheet(true)} className="shrink-0">
           <Plus size={15} className="mr-1 -mt-0.5 inline" /> Pesati
         </Button>
       </div>
+
+      <SottoNav voci={NAV_PROGRESSI} />
 
       <div className="mt-4 grid grid-cols-2 gap-3">
         <Stat
@@ -143,8 +126,6 @@ export default function Progressi() {
       </div>
 
       <HealthCard />
-
-      <VolumeMuscolare />
 
       <SectionTitle>Andamento peso</SectionTitle>
       {serie.length < 2 ? (
@@ -203,35 +184,6 @@ export default function Progressi() {
             tratteggiati sono le pesate singole, che oscillano di 1-2 kg per acqua e sale.
           </p>
         </Card>
-      )}
-
-      <Aderenza />
-
-      <Deload />
-
-      {sessioni.length > 0 && (
-        <>
-          <SectionTitle>Volume settimanale (kg sollevati)</SectionTitle>
-          <Card className="!px-1 !py-3">
-            <ResponsiveContainer width="100%" height={170}>
-              <LineChart data={volumeSettimane} margin={{ top: 6, right: 14, left: -18, bottom: 0 }}>
-                <CartesianGrid stroke={colori.griglia} vertical={false} />
-                <XAxis dataKey="data" tick={{ fill: colori.testo, fontSize: 11 }} axisLine={false} tickLine={false} />
-                <YAxis tick={{ fill: colori.testo, fontSize: 11 }} axisLine={false} tickLine={false} width={44} />
-                <Tooltip
-                  contentStyle={{
-                    background: colori.superficie,
-                    border: `1px solid ${colori.bordo}`,
-                    color: coloreTema('ink', '#111827'),
-                    borderRadius: 12,
-                    fontSize: 12,
-                  }}
-                />
-                <Line type="monotone" dataKey="volume" stroke={colori.accento} strokeWidth={2.5} dot={false} name="Volume" />
-              </LineChart>
-            </ResponsiveContainer>
-          </Card>
-        </>
       )}
 
       {pesi.length > 0 && (

@@ -14,11 +14,15 @@ import Esercizi from './pages/Esercizi';
 import EsercizioDetail from './pages/EsercizioDetail';
 import Piano from './pages/Piano';
 import Dieta from './pages/Dieta';
+import DietaRicette from './pages/DietaRicette';
+import DietaSostituzioni from './pages/DietaSostituzioni';
 import RicettaDetail from './pages/RicettaDetail';
 import Integratori from './pages/Integratori';
 import Spesa from './pages/Spesa';
 // i grafici (recharts) pesano: caricati solo quando servono
 const Progressi = lazy(() => import('./pages/Progressi'));
+const ProgressiDieta = lazy(() => import('./pages/ProgressiDieta'));
+const ProgressiAllenamento = lazy(() => import('./pages/ProgressiAllenamento'));
 import Profilo from './pages/Profilo';
 import Storico from './pages/Storico';
 
@@ -51,10 +55,14 @@ export default function App() {
         <Route path="/sessione" element={<Sessione />} />
         <Route path="/piano" element={<Piano />} />
         <Route path="/dieta" element={<Dieta />} />
+        <Route path="/dieta/ricette" element={<DietaRicette />} />
+        <Route path="/dieta/sostituzioni" element={<DietaSostituzioni />} />
         <Route path="/dieta/ricetta/:id" element={<RicettaDetail />} />
         <Route path="/integratori" element={<Integratori />} />
         <Route path="/spesa" element={<Spesa />} />
         <Route path="/progressi" element={<Progressi />} />
+        <Route path="/progressi/dieta" element={<ProgressiDieta />} />
+        <Route path="/progressi/allenamento" element={<ProgressiAllenamento />} />
         <Route path="/storico" element={<Storico />} />
         <Route path="/profilo" element={<Profilo />} />
         <Route path="*" element={<Navigate to="/" replace />} />

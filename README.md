@@ -39,15 +39,19 @@ tutti gli effetti e continua a funzionare offline.
 
 ## Cosa c'è dentro
 
+La barra in basso ha cinque sezioni; dentro ognuna si naviga con la fila di schede sotto al titolo,
+così niente sta a più di due tocchi. Ogni scheda è un indirizzo vero: il tasto indietro riporta dove
+eri, coi filtri che avevi.
+
 | Sezione | Cosa fa |
 | --- | --- |
-| **Home** | Allenamento di oggi, macro della giornata, checklist integratori, peso |
-| **Allena** | 4 programmi (definizione low carb, forza, massa, mantenimento), 16 schede, 86 esercizi con esecuzione ed errori comuni |
+| **Oggi** | Allenamento di oggi, macro della giornata, checklist integratori, peso |
+| **Allena** | Programmi · Esercizi · Storico. 4 blocchi, 16 schede, 86 esercizi con esecuzione ed errori comuni |
 | **Sessione** | Timer, log di serie/carico/ripetizioni, carico suggerito, record personali, conto alla rovescia per plank e simili, cambio esercizio al volo, playlist Spotify |
 | **Piano** | Calendario: stendi un programma su più settimane (anche solo lun-ven), calorie e passi giorno per giorno |
-| **Dieta** | Menu generato sui tuoi macro da 54 ricette, diario pasti (anche a mano o "sgarro"), ricettario, tabella sostituzioni |
-| **Spesa** | Lista dei 7 giorni raggruppata per reparto, con link di ricerca Eurospin |
-| **Progressi** | Peso con tendenza a 7 giorni, aderenza alla dieta incrociata col peso, segnale di scarico, circonferenze, serie per gruppo muscolare, anelli da Health Connect |
+| **Dieta** | Oggi · Ricette · Sostituzioni · Spesa · Integratori |
+
+| **Progressi** | Peso e misure · Dieta (aderenza) · Allenamento (scarico, serie per muscolo, volume) |
 
 Calorie e macro: metabolismo basale con Mifflin-St Jeor, TDEE per livello di attività, macro per
 obiettivo (le regole stanno in [`src/lib/nutrition.ts`](src/lib/nutrition.ts)). Il blocco low carb è

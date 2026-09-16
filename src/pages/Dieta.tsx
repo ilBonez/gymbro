@@ -1,30 +1,24 @@
 import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Check, ChevronRight, Clock, PartyPopper, Pill, Plus, RefreshCw, Search, ShoppingCart, Trash2 } from 'lucide-react';
-import { RECIPES } from '../data/recipes';
+import { Check, Clock, PartyPopper, Pill, Plus, RefreshCw, ShoppingCart, Trash2 } from 'lucide-react';
 import { useStore } from '../store/useStore';
 import { useTargets } from '../lib/useTargets';
 import { MOMENTO_LABEL, gapMacro, generaGiornoDieta, listaSpesaDaPasti, fmtQta, totaliGiorno } from '../lib/diet';
 import { ETICHETTA_STATO, equivalenti } from '../lib/equivalenze';
 import { MacroBlock } from '../components/MacroRow';
-import { Button, Card, Chip, SectionTitle, Tag, cx, inputCls } from '../components/ui';
+import { Button, Card, SectionTitle, Tag, cx } from '../components/ui';
 import { AggiungiPasto } from '../components/AggiungiPasto';
-import { Sostituzioni } from '../components/Sostituzioni';
+import { NAV_DIETA, SottoNav } from '../components/SottoNav';
 import { key, oggi } from '../lib/date';
 import { GOAL_RULES } from '../lib/nutrition';
 import { addDays } from 'date-fns';
 
 export default function Dieta() {
-  const [tab, setTab] = useState<'oggi' | 'ricette' | 'sostituzioni'>('oggi');
   return (
     <div>
       <h1 className="text-2xl font-bold tracking-tight">Dieta</h1>
-      <div className="-mx-4 mt-3 flex gap-2 overflow-x-auto px-4 pb-1">
-        <Chip active={tab === 'oggi'} onClick={() => setTab('oggi')}>Menu di oggi</Chip>
-        <Chip active={tab === 'ricette'} onClick={() => setTab('ricette')}>Ricette</Chip>
-        <Chip active={tab === 'sostituzioni'} onClick={() => setTab('sostituzioni')}>Sostituzioni</Chip>
-      </div>
-      {tab === 'oggi' ? <MenuOggi /> : tab === 'ricette' ? <Ricettario /> : <Sostituzioni />}
+      <SottoNav voci={NAV_DIETA} />
+      <MenuOggi />
     </div>
   );
 }
@@ -294,73 +288,6 @@ function MenuOggi() {
       </div>
 
       <AggiungiPasto open={aggiungi} onClose={() => setAggiungi(false)} data={today} />
-    </div>
-  );
-}
-
-function Ricettario() {
-  const [q, setQ] = useState('');
-  const [fase, setFase] = useState<string>('tutte');
-  const obiettivo = useStore((s) => s.profile?.obiettivo);
-
-  const fasi = ['tutte', 'definizione', 'forza', 'massa', 'mantenimento'];
-
-  const risultati = RECIPES.filter((r) => {
-    if (fase !== 'tutte' && !r.fasi.includes(fase as never)) return false;
-    const t = q.trim().toLowerCase();
-    if (t && !r.nome.toLowerCase().includes(t) && !(r.tags ?? []).join(' ').includes(t)) return false;
-    return true;
-  });
-
-  return (
-    <div>
-      <div className="relative mt-4">
-        <Search size={16} className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-muted" />
-        <input
-          value={q}
-          onChange={(e) => setQ(e.target.value)}
-          placeholder="Cerca ricetta… (es. pancake)"
-          className={cx(inputCls, 'pl-10')}
-        />
-      </div>
-
-      <div className="-mx-4 mt-3 flex gap-2 overflow-x-auto px-4 pb-1">
-        {fasi.map((f) => (
-          <Chip key={f} active={fase === f} onClick={() => setFase(f)}>
-            {f === 'tutte' ? 'Tutte le fasi' : f}
-            {f === obiettivo && ' ★'}
-          </Chip>
-        ))}
-      </div>
-
-      <p className="mt-4 text-xs text-muted">{risultati.length} ricette</p>
-
-      <div className="mt-2 space-y-2">
-        {risultati.map((r) => (
-          <Link key={r.id} to={`/dieta/ricetta/${r.id}`} className="block">
-            <Card className="!p-3.5">
-              <div className="flex items-center gap-3">
-                <div className="min-w-0 flex-1">
-                  <h3 className="truncate text-sm font-semibold">{r.nome}</h3>
-                  <p className="mt-0.5 text-[11px] tabular-nums text-muted">
-                    {r.macro.kcal} kcal · P {r.macro.proteine} · C {r.macro.carbs} · G {r.macro.grassi} ·{' '}
-                    {r.tempoMin}′
-                  </p>
-                  <div className="mt-1.5 flex flex-wrap gap-1.5">
-                    {r.momenti.slice(0, 2).map((m) => (
-                      <Tag key={m}>{MOMENTO_LABEL[m]}</Tag>
-                    ))}
-                    {(r.tags ?? []).slice(0, 2).map((t) => (
-                      <Tag key={t} tone="brand">{t}</Tag>
-                    ))}
-                  </div>
-                </div>
-                <ChevronRight size={16} className="shrink-0 text-muted" />
-              </div>
-            </Card>
-          </Link>
-        ))}
-      </div>
     </div>
   );
 }

@@ -3,6 +3,7 @@ import { Check, ExternalLink, Plus, ShoppingBasket, Trash2 } from 'lucide-react'
 import { FOODS } from '../data/foods';
 import { useStore } from '../store/useStore';
 import { Button, Card, Chip, Empty, SectionTitle, Sheet, cx, inputCls } from '../components/ui';
+import { NAV_DIETA, SottoNav } from '../components/SottoNav';
 
 const CATEGORIA_LABEL: Record<string, string> = {
   'proteine-polvere': 'Proteine in polvere',
@@ -51,10 +52,13 @@ export default function Spesa() {
 
   return (
     <div>
-      <div className="flex items-start justify-between gap-3">
+      <h1 className="text-2xl font-bold tracking-tight">Dieta</h1>
+      <SottoNav voci={NAV_DIETA} />
+
+      <div className="mt-4 flex items-start justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Lista della spesa</h1>
-          <p className="mt-1 text-sm text-muted">
+          <h2 className="text-lg font-bold">Lista della spesa</h2>
+          <p className="mt-0.5 text-sm text-muted">
             {spesa.length === 0 ? 'Vuota' : `${presi}/${spesa.length} presi`}
           </p>
         </div>

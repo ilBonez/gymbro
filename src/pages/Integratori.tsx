@@ -3,6 +3,7 @@ import { SUPPLEMENTS, TIMING_LABEL } from '../data/supplements';
 import type { Timing } from '../data/supplements';
 import { useStore } from '../store/useStore';
 import { Card, SectionTitle, Tag, Warn, cx } from '../components/ui';
+import { NAV_DIETA, SottoNav } from '../components/SottoNav';
 import { oggi } from '../lib/date';
 
 const ORDINE: Timing[] = ['pre-workout', 'post-workout', 'mattina', 'pranzo', 'sera', 'a-piacere'];
@@ -17,7 +18,9 @@ export default function Integratori() {
 
   return (
     <div>
-      <h1 className="text-2xl font-bold tracking-tight">Integratori</h1>
+      <h1 className="text-2xl font-bold tracking-tight">Dieta</h1>
+      <SottoNav voci={NAV_DIETA} />
+      <h2 className="mt-4 text-lg font-bold">Integratori</h2>
       <p className="mt-1 text-sm text-muted">
         Attiva quelli che usi: compaiono nella checklist della home, ordinati per momento della giornata.
       </p>

@@ -1,10 +1,12 @@
-import { useMemo, useState } from 'react';
+import { useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { ChevronRight, Search, Star } from 'lucide-react';
 import { EXERCISES } from '../data/exercises';
 import type { Equipment, MuscleGroup } from '../data/exercises';
 import { useStore } from '../store/useStore';
 import { Card, Chip, Empty, Tag, cx, inputCls } from '../components/ui';
+import { NAV_ALLENA, SottoNav } from '../components/SottoNav';
+import { useFlagUrl, useParametroUrl } from '../lib/urlState';
 
 const GRUPPI: (MuscleGroup | 'tutti')[] = [
   'tutti', 'petto', 'schiena', 'spalle', 'bicipiti', 'tricipiti',
@@ -17,10 +19,13 @@ const ATTREZZI: (Equipment | 'tutti')[] = [
 
 export default function Esercizi() {
   const preferiti = useStore((s) => s.preferiti);
-  const [q, setQ] = useState('');
-  const [gruppo, setGruppo] = useState<(typeof GRUPPI)[number]>('tutti');
-  const [attrezzo, setAttrezzo] = useState<(typeof ATTREZZI)[number]>('tutti');
-  const [soloPreferiti, setSoloPreferiti] = useState(false);
+  const [q, setQ] = useParametroUrl('q', '');
+  const [gruppoRaw, setGruppo] = useParametroUrl('gruppo', 'tutti');
+  const [attrezzoRaw, setAttrezzo] = useParametroUrl('attrezzo', 'tutti');
+  const [soloPreferiti, setSoloPreferiti] = useFlagUrl('preferiti');
+
+  const gruppo = gruppoRaw as (typeof GRUPPI)[number];
+  const attrezzo = attrezzoRaw as (typeof ATTREZZI)[number];
 
   const risultati = useMemo(() => {
     const t = q.trim().toLowerCase();
@@ -35,8 +40,11 @@ export default function Esercizi() {
 
   return (
     <div>
-      <h1 className="text-2xl font-bold tracking-tight">Libreria esercizi</h1>
-      <p className="mt-1 text-sm text-muted">{EXERCISES.length} esercizi con esecuzione e alternative.</p>
+      <h1 className="text-2xl font-bold tracking-tight">Allenamento</h1>
+      <SottoNav voci={NAV_ALLENA} />
+      <p className="mt-4 text-sm text-muted">
+        {EXERCISES.length} esercizi con esecuzione, errori comuni e alternative.
+      </p>
 
       <div className="relative mt-4">
         <Search size={16} className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-muted" />
@@ -49,7 +57,7 @@ export default function Esercizi() {
       </div>
 
       <div className="-mx-4 mt-3 flex gap-2 overflow-x-auto px-4 pb-1">
-        <Chip active={soloPreferiti} onClick={() => setSoloPreferiti((v) => !v)}>
+        <Chip active={soloPreferiti} onClick={() => setSoloPreferiti(!soloPreferiti)}>
           <Star size={11} className="mr-1 -mt-0.5 inline" fill={soloPreferiti ? 'currentColor' : 'none'} />
           Preferiti
         </Chip>
