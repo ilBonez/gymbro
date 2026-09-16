@@ -7,7 +7,15 @@ import { Button, Card, Field, SectionTitle, Sheet, Tag, Warn, inputCls } from '.
 import { GIORNI_IT, oggi } from '../lib/date';
 import { GOAL_RULES, macroTargets } from '../lib/nutrition';
 import { useTargets } from '../lib/useTargets';
-import { commentoStima, kcalScheda, stimaSettimanale } from '../lib/burn';
+import {
+  commentoStima,
+  kcalAlMinuto,
+  kcalScheda,
+  metCardio,
+  metScheda,
+  nomeCardio,
+  stimaSettimanale,
+} from '../lib/burn';
 
 export default function ProgramDetail() {
   const { id } = useParams();
@@ -103,6 +111,21 @@ export default function ProgramDetail() {
               </p>
               {programma.cardio.note && (
                 <p className="mt-1 text-xs text-muted">{programma.cardio.note}</p>
+              )}
+              {targets && (
+                <p className="mt-2 text-[11px] leading-relaxed text-muted">
+                  Al minuto il cardio costa più dei pesi:{' '}
+                  <b className="text-ink">
+                    {kcalAlMinuto(metCardio(programma.cardio.modalita), targets.pesoKg)} kcal/min
+                  </b>{' '}
+                  ({nomeCardio(programma.cardio.modalita).toLowerCase()}) contro{' '}
+                  <b className="text-ink">
+                    {kcalAlMinuto(metScheda(programma.workouts[0], programma.goal), targets.pesoKg)}{' '}
+                    kcal/min
+                  </b>{' '}
+                  in sala pesi, dove gran parte del tempo è recupero. Nel totale settimanale però i
+                  pesi possono superarlo, perché le sedute durano il doppio.
+                </p>
               )}
             </div>
           </div>

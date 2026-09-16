@@ -65,7 +65,15 @@ conferma. Nel browser resta il download manuale.
 allenamento, pesata del mattino e magnesio della sera. Solo nell'app installata.
 
 Ogni programma mostra anche quante calorie costa una seduta e che variazione di peso aspettarsi in una
-settimana: sono stime con un margine del 20-30%, utili per confrontare un blocco con l'altro.
+settimana. I MET vengono dal
+[2024 Adult Compendium of Physical Activities](https://pacompendium.com/adult-compendium/), col codice
+della voce citato nel codice. Sono stime con un margine del 20-30%, utili per confrontare un blocco con
+l'altro.
+
+Due numeri che sorprendono e sono corretti: **una seduta di pesi costa meno di quanto sembri** (3,5 MET
+per "esercizi multipli, 8-15 ripetizioni", perché in un'ora il tempo sotto sforzo è di pochi minuti), e
+**il cardio costa di più al minuto ma dura meno**, quindi nel totale settimanale i pesi possono comunque
+superarlo.
 
 I prezzi degli alimenti sono **indicativi**: cambiano da un punto vendita all'altro.
 

@@ -1,4 +1,4 @@
-import type { Goal } from './data/programs';
+import type { Goal, ModalitaCardio } from './data/programs';
 
 export type Sex = 'uomo' | 'donna';
 
@@ -52,7 +52,7 @@ export interface PlanDay {
   data: string;             // yyyy-MM-dd (chiave)
   programId: string;
   workoutId: string | null; // null = giorno di riposo
-  cardio?: { tipo: string; durataMin: number } | null;
+  cardio?: { tipo: string; modalita: ModalitaCardio; durataMin: number } | null;
   note?: string;
 }
 

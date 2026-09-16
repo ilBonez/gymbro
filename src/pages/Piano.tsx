@@ -93,7 +93,7 @@ export default function Piano() {
             targets && w
               ? kcalScheda(w, prog!.goal, targets.pesoKg)
               : targets && g?.cardio
-                ? kcalCardio(g.cardio.tipo, g.cardio.durataMin, targets.pesoKg)
+                ? kcalCardio(g.cardio.modalita, g.cardio.durataMin, targets.pesoKg)
                 : 0;
 
           return (
@@ -259,7 +259,11 @@ export default function Piano() {
                         programId: selProg.id,
                         workoutId: null,
                         cardio: selProg.cardio
-                          ? { tipo: selProg.cardio.tipo, durataMin: selProg.cardio.durataMin }
+                          ? {
+                              tipo: selProg.cardio.tipo,
+                              modalita: selProg.cardio.modalita,
+                              durataMin: selProg.cardio.durataMin,
+                            }
                           : null,
                       })
                     }

@@ -1,5 +1,34 @@
 export type Goal = 'definizione' | 'forza' | 'massa' | 'mantenimento';
 
+/**
+ * Che cosa si fa davvero durante il cardio. Serve a scegliere il MET giusto:
+ * il campo `tipo` e' una descrizione per l'utente ed elenca alternative
+ * ("camminata in pendenza o ellittica"), quindi non e' interpretabile a codice.
+ */
+export type ModalitaCardio =
+  | 'camminata-pendenza'
+  | 'camminata'
+  | 'ellittica'
+  | 'cyclette'
+  | 'vogatore'
+  | 'corsa'
+  | 'scala'
+  | 'hiit';
+
+export interface Cardio {
+  /** descrizione leggibile, mostrata nell'app */
+  tipo: string;
+  /** attivita' prevalente, usata per stimare le calorie */
+  modalita: ModalitaCardio;
+  frequenzaSettimana: number;
+  durataMin: number;
+  /** quante delle sedute settimanali sono HIIT invece della modalita' base */
+  sessioniHiit?: number;
+  durataHiitMin?: number;
+  intensita: string;
+  note?: string;
+}
+
 export interface ProgramSet {
   exerciseId: string;   // deve esistere in EXERCISES
   serie: number;
@@ -28,7 +57,7 @@ export interface Program {
   durataMaxSettimane?: number;  // limite di sicurezza oltre il quale va interrotto
   giorniSettimana: number;      // sessioni/settimana
   splitSuggerito: string[];     // es. ['Push','Pull','Gambe','Riposo',...] lunghezza 7
-  cardio: { tipo: string; frequenzaSettimana: number; durataMin: number; intensita: string; note?: string } | null;
+  cardio: Cardio | null;
   workouts: WorkoutTemplate[];
   avvertenze?: string[];
 }
@@ -57,8 +86,11 @@ export const PROGRAMS: Program[] = [
     ],
     cardio: {
       tipo: 'LISS (camminata in pendenza o ellittica) + 1 sessione HIIT',
+      modalita: 'camminata-pendenza',
       frequenzaSettimana: 4,
       durataMin: 35,
+      sessioniHiit: 1,
+      durataHiitMin: 18,
       intensita: 'LISS al 60-70% della frequenza cardiaca massima; HIIT 30s sprint / 90s recupero',
       note: '3 sessioni LISS da 30-40 minuti più 1 HIIT da 15-20 minuti. Tieni l\'HIIT lontano dalla seduta di gambe, idealmente a 24 ore di distanza.',
     },
@@ -196,6 +228,7 @@ export const PROGRAMS: Program[] = [
     ],
     cardio: {
       tipo: 'LISS a basso impatto (camminata in pendenza o cyclette)',
+      modalita: 'camminata-pendenza',
       frequenzaSettimana: 2,
       durataMin: 20,
       intensita: 'Zona 2, ritmo conversazionale',
@@ -331,6 +364,7 @@ export const PROGRAMS: Program[] = [
     ],
     cardio: {
       tipo: 'LISS su tapis roulant o cyclette',
+      modalita: 'camminata',
       frequenzaSettimana: 2,
       durataMin: 20,
       intensita: 'Zona 2, ritmo conversazionale',
@@ -493,6 +527,7 @@ export const PROGRAMS: Program[] = [
     ],
     cardio: {
       tipo: 'Camminata veloce, cyclette o vogatore',
+      modalita: 'camminata',
       frequenzaSettimana: 3,
       durataMin: 25,
       intensita: 'Moderata, zona 2',

@@ -261,7 +261,11 @@ export const useStore = create<State>()(
             workoutId: match?.id ?? null,
             cardio:
               !match && prog.cardio && SOLO_CARDIO.test(etichetta)
-                ? { tipo: prog.cardio.tipo, durataMin: prog.cardio.durataMin }
+                ? {
+                    tipo: prog.cardio.tipo,
+                    modalita: prog.cardio.modalita,
+                    durataMin: prog.cardio.durataMin,
+                  }
                 : null,
             note: !match && !senzaPesi ? etichetta : undefined,
           };
