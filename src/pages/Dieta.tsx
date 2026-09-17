@@ -244,12 +244,13 @@ function MenuOggi() {
                 <CopyPlus size={12} className="mr-0.5 -mt-0.5 inline" /> Ripeti ieri
               </button>
             )}
+            {/* l'icona da sola era un bersaglio di 14 px: impossibile centrarla col dito */}
             <button
               onClick={() => setAggiungi('barcode')}
               aria-label="Leggi il codice a barre"
-              className="text-xs text-brandink"
+              className="-m-2 rounded-lg p-2 text-brandink"
             >
-              <ScanBarcode size={14} />
+              <ScanBarcode size={16} />
             </button>
             <button onClick={() => setAggiungi('manuale')} className="text-xs text-brandink">
               <Plus size={12} className="mr-0.5 -mt-0.5 inline" /> Aggiungi

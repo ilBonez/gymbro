@@ -17,33 +17,86 @@ interface RilevatoreCodici {
 
 type CostruttoreRilevatore = new (opzioni?: { formats?: string[] }) => RilevatoreCodici;
 
-const Rilevatore = (globalThis as { BarcodeDetector?: CostruttoreRilevatore }).BarcodeDetector;
+function rilevatoreDisponibile(): CostruttoreRilevatore | undefined {
+  return (globalThis as { BarcodeDetector?: CostruttoreRilevatore }).BarcodeDetector;
+}
 
 export function ScannerBarcode({ onCodice }: { onCodice: (codice: string) => void }) {
   const video = useRef<HTMLVideoElement | null>(null);
-  const stream = useRef<MediaStream | null>(null);
-  const [acceso, setAcceso] = useState(false);
+  const [stream, setStream] = useState<MediaStream | null>(null);
   const [errore, setErrore] = useState('');
   const [manuale, setManuale] = useState('');
+  const [inquadra, setInquadra] = useState(false);
+
+  const Rilevatore = rilevatoreDisponibile();
 
   const spegni = () => {
-    stream.current?.getTracks().forEach((t) => t.stop());
-    stream.current = null;
-    setAcceso(false);
+    setStream((s) => {
+      s?.getTracks().forEach((t) => t.stop());
+      return null;
+    });
+    setInquadra(false);
   };
 
   // la fotocamera non deve restare accesa quando il foglio si chiude
-  useEffect(() => spegni, []);
-
   useEffect(() => {
-    if (!acceso || !Rilevatore) return;
+    return () => {
+      stream?.getTracks().forEach((t) => t.stop());
+    };
+  }, [stream]);
+
+  /*
+   * Attaccare lo stream e farlo partire.
+   *
+   * Prima lo facevo in un setTimeout dopo getUserMedia: a volte il <video> non
+   * era ancora nel DOM, e comunque senza `autoplay` la riproduzione non
+   * partiva da sola — restava il rettangolo grigio col triangolo del play.
+   * Qui l'effetto gira dopo il commit, quindi l'elemento c'è di sicuro, e
+   * play() viene richiamato anche quando i metadati arrivano più tardi.
+   */
+  useEffect(() => {
+    const v = video.current;
+    if (!v || !stream) return;
+
+    v.srcObject = stream;
+    const avvia = () => {
+      v.play()
+        .then(() => setInquadra(true))
+        .catch(() => setErrore('La fotocamera non è partita. Scrivi il codice a mano qui sotto.'));
+    };
+
+    if (v.readyState >= 1) avvia();
+    else v.addEventListener('loadedmetadata', avvia, { once: true });
+
+    return () => {
+      v.removeEventListener('loadedmetadata', avvia);
+      v.srcObject = null;
+    };
+  }, [stream]);
+
+  /*
+   * Il ciclo di lettura.
+   *
+   * Prima usciva subito: la condizione del while chiedeva readyState >= 2, che
+   * appena acceso è ancora 0, e il ciclo non partiva nemmeno una volta. Ora
+   * aspetta che ci siano fotogrammi invece di arrendersi.
+   */
+  useEffect(() => {
+    if (!stream || !Rilevatore) return;
     const rilevatore = new Rilevatore({ formats: ['ean_13', 'ean_8', 'upc_a', 'upc_e'] });
     let attivo = true;
 
+    const attendi = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
     const cerca = async () => {
-      while (attivo && video.current && video.current.readyState >= 2) {
+      while (attivo) {
+        const v = video.current;
+        if (!v || v.readyState < 2 || v.videoWidth === 0) {
+          await attendi(200);
+          continue;
+        }
         try {
-          const trovati = await rilevatore.detect(video.current);
+          const trovati = await rilevatore.detect(v);
           const codice = trovati[0]?.rawValue;
           if (codice && barcodeValido(codice)) {
             attivo = false;
@@ -54,7 +107,7 @@ export function ScannerBarcode({ onCodice }: { onCodice: (codice: string) => voi
         } catch {
           /* fotogramma illeggibile: si riprova col prossimo */
         }
-        await new Promise((r) => setTimeout(r, 300));
+        await attendi(250);
       }
     };
     void cerca();
@@ -62,23 +115,15 @@ export function ScannerBarcode({ onCodice }: { onCodice: (codice: string) => voi
     return () => {
       attivo = false;
     };
-  }, [acceso, onCodice]);
+  }, [stream, Rilevatore, onCodice]);
 
   const accendi = async () => {
     setErrore('');
     try {
       const s = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: { ideal: 'environment' } },
+        video: { facingMode: { ideal: 'environment' }, width: { ideal: 1280 } },
       });
-      stream.current = s;
-      setAcceso(true);
-      // il video esiste solo dopo il render: aspettiamo il giro successivo
-      setTimeout(() => {
-        if (video.current) {
-          video.current.srcObject = s;
-          void video.current.play();
-        }
-      }, 0);
+      setStream(s);
     } catch {
       setErrore('Fotocamera non disponibile o permesso negato. Scrivi il codice a mano.');
     }
@@ -87,10 +132,21 @@ export function ScannerBarcode({ onCodice }: { onCodice: (codice: string) => voi
   return (
     <div className="space-y-3">
       {Rilevatore &&
-        (acceso ? (
+        (stream ? (
           <div className="relative overflow-hidden rounded-2xl border border-line bg-black">
-            <video ref={video} playsInline muted className="h-52 w-full object-cover" />
+            <video
+              ref={video}
+              autoPlay
+              playsInline
+              muted
+              className="h-52 w-full bg-black object-cover"
+            />
             <div className="pointer-events-none absolute inset-x-8 inset-y-16 rounded-xl border-2 border-brand-500/80" />
+            {!inquadra && (
+              <p className="absolute inset-x-0 bottom-2 text-center text-[11px] text-white/80">
+                Accendo la fotocamera…
+              </p>
+            )}
             <button
               onClick={spegni}
               aria-label="Chiudi fotocamera"
