@@ -99,6 +99,13 @@ export function nomeCardio(modalita: ModalitaCardio | undefined): string {
   return (modalita && MET_CARDIO[modalita]?.nome) || 'Cardio';
 }
 
+/** Le modalità di cardio con il loro nome leggibile, per i menu di scelta. */
+export const MODALITA_CARDIO = Object.entries(MET_CARDIO).map(([id, v]) => ({
+  id: id as ModalitaCardio,
+  nome: v.nome,
+  met: v.met,
+}));
+
 export function kcalCardio(
   modalita: ModalitaCardio | undefined,
   minuti: number,

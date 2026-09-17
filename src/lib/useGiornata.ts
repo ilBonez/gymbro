@@ -6,13 +6,15 @@ import { componiGiornata, componiPeriodo, type Fonti, type Giornata } from './gi
 export function useFonti(): Fonti {
   const piano = useStore((s) => s.piano);
   const sessioni = useStore((s) => s.sessioni);
+  const sessioniCardio = useStore((s) => s.sessioniCardio);
   const giorniSalute = useStore((s) => s.giorniSalute);
   const pasti = useStore((s) => s.pasti);
   const pesi = useStore((s) => s.pesi);
+  const pesoKg = useStore((s) => s.profile?.pesoKg ?? 75);
 
   return useMemo(
-    () => ({ piano, sessioni, giorniSalute, pasti, pesi }),
-    [piano, sessioni, giorniSalute, pasti, pesi],
+    () => ({ piano, sessioni, sessioniCardio, giorniSalute, pasti, pesi, pesoKg }),
+    [piano, sessioni, sessioniCardio, giorniSalute, pasti, pesi, pesoKg],
   );
 }
 

@@ -1,14 +1,19 @@
 import { useState } from 'react';
-import { ChevronDown, Dumbbell, Timer, Weight } from 'lucide-react';
+import { ChevronDown, Dumbbell, Flame, HeartPulse, Timer, Trash2, Weight } from 'lucide-react';
 import { useStore } from '../store/useStore';
 import { nomeEsercizio, scheda } from '../lib/catalog';
-import { Card, Empty, Stat, Tag, cx } from '../components/ui';
+import { Button, Card, Empty, SectionTitle, Stat, Tag, cx } from '../components/ui';
 import { NAV_ALLENA, SottoNav } from '../components/SottoNav';
+import { nomeCardio } from '../lib/burn';
+import { RegistraCardio } from '../components/RegistraCardio';
 import { fmtDurata, giorniTra, labelLungo, oggi } from '../lib/date';
 
 export default function Storico() {
   const sessioni = useStore((s) => s.sessioni);
+  const sessioniCardio = useStore((s) => s.sessioniCardio);
+  const removeCardio = useStore((s) => s.removeCardio);
   const [aperta, setAperta] = useState<string | null>(null);
+  const [registra, setRegistra] = useState(false);
 
   const settimana = sessioni.filter((s) => giorniTra(s.data, oggi()) < 7);
   const volumeSettimana = settimana.reduce((t, s) => t + s.volumeKg, 0);
@@ -20,7 +25,15 @@ export default function Storico() {
       <SottoNav voci={NAV_ALLENA} />
 
       <div className="mt-4 grid grid-cols-3 gap-2.5">
-        <Stat label="Sedute" value={sessioni.length} sub={`${settimana.length} questa sett.`} />
+        <Stat
+          label="Sedute"
+          value={sessioni.length}
+          sub={
+            sessioniCardio.length > 0
+              ? `${settimana.length} questa sett. · ${sessioniCardio.length} cardio`
+              : `${settimana.length} questa sett.`
+          }
+        />
         <Stat
           label="Volume 7gg"
           value={volumeSettimana >= 1000 ? (volumeSettimana / 1000).toFixed(1) : volumeSettimana}
@@ -96,6 +109,58 @@ export default function Storico() {
           })}
         </div>
       )}
+
+      <SectionTitle
+        action={
+          <Button variant="ghost" className="!py-1.5 !text-xs" onClick={() => setRegistra(true)}>
+            Registra
+          </Button>
+        }
+      >
+        Cardio
+      </SectionTitle>
+      {sessioniCardio.length === 0 ? (
+        <Card>
+          <p className="text-xs leading-relaxed text-muted">
+            Nessuna seduta di cardio registrata. Registrandola, minuti e calorie entrano negli anelli
+            e nei totali del calendario invece di restare una stima.
+          </p>
+        </Card>
+      ) : (
+        <div className="space-y-2">
+          {[...sessioniCardio]
+            .sort((a, b) => b.data.localeCompare(a.data))
+            .map((c) => (
+              <Card key={c.id} className="!p-3.5">
+                <div className="flex items-center gap-3">
+                  <HeartPulse size={16} className="shrink-0 text-carb" />
+                  <div className="min-w-0 flex-1">
+                    <h3 className="text-sm font-semibold">{nomeCardio(c.modalita)}</h3>
+                    <p className="mt-0.5 text-[11px] capitalize text-muted">{labelLungo(c.data)}</p>
+                    <div className="mt-1.5 flex flex-wrap gap-x-3.5 gap-y-1 text-[11px] text-muted">
+                      <span className="inline-flex items-center gap-1">
+                        <Timer size={11} /> {c.minuti} min
+                      </span>
+                      <span className="inline-flex items-center gap-1">
+                        <Flame size={11} /> {c.kcal} kcal{c.kcalAMano && ' (a mano)'}
+                      </span>
+                      {c.fcMedia && <span>{c.fcMedia} bpm</span>}
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => removeCardio(c.id)}
+                    aria-label="Elimina seduta cardio"
+                    className="shrink-0 rounded-lg p-1.5 text-muted hover:text-red-500"
+                  >
+                    <Trash2 size={13} />
+                  </button>
+                </div>
+              </Card>
+            ))}
+        </div>
+      )}
+
+      <RegistraCardio data={oggi()} open={registra} onClose={() => setRegistra(false)} />
     </div>
   );
 }

@@ -9,7 +9,7 @@ import type {
   ShoppingItem,
   WeightEntry,
 } from '../types';
-import type { WorkoutTemplate } from '../data/programs';
+import type { ModalitaCardio, WorkoutTemplate } from '../data/programs';
 import type { Meal, Recipe } from '../data/recipes';
 import { programma, registraRicetteMie, registraSchedeMie } from '../lib/catalog';
 import { key } from '../lib/date';
@@ -53,6 +53,19 @@ export interface GiornoSalute {
   minutiEsercizio?: number;
 }
 
+/** Una seduta di cardio registrata a mano: il cardio non passa dalla sessione pesi. */
+export interface SessioneCardio {
+  id: string;
+  data: string;
+  modalita: ModalitaCardio;
+  minuti: number;
+  kcal: number;
+  /** vero se le calorie le hai scritte tu invece di lasciarle stimare dal MET */
+  kcalAMano?: boolean;
+  fcMedia?: number;
+  note?: string;
+}
+
 export interface ObiettiviAttivita {
   kcal: number;
   passi: number;
@@ -70,6 +83,7 @@ interface State {
   pesi: WeightEntry[];
   piano: Record<string, PlanDay>;
   sessioni: SessionLog[];
+  sessioniCardio: SessioneCardio[];
   sessioneAttiva: SessionLog | null;
   spesa: ShoppingItem[];
   integratoriAttivi: string[];
@@ -119,6 +133,9 @@ interface State {
   concludiSessione: (durataSec: number, nota?: string) => void;
   annullaSessione: () => void;
 
+  addCardio: (c: Omit<SessioneCardio, 'id'>) => void;
+  removeCardio: (id: string) => void;
+
   addSpesa: (i: Omit<ShoppingItem, 'id'>) => void;
   toggleSpesa: (id: string) => void;
   removeSpesa: (id: string) => void;
@@ -157,6 +174,7 @@ export const useStore = create<State>()(
       pesi: [],
       piano: {},
       sessioni: [],
+      sessioniCardio: [],
       sessioneAttiva: null,
       spesa: [],
       integratoriAttivi: STACK_MATTINA_PRESTO,
@@ -199,6 +217,7 @@ export const useStore = create<State>()(
           pesi: [],
           piano: {},
           sessioni: [],
+          sessioniCardio: [],
           sessioneAttiva: null,
           spesa: [],
           pasti: [],
@@ -386,6 +405,12 @@ export const useStore = create<State>()(
         }),
 
       annullaSessione: () => set({ sessioneAttiva: null }),
+
+      addCardio: (c) =>
+        set((s) => ({ sessioniCardio: [{ ...c, id: uid() }, ...s.sessioniCardio] })),
+
+      removeCardio: (id) =>
+        set((s) => ({ sessioniCardio: s.sessioniCardio.filter((c) => c.id !== id) })),
 
       addSpesa: (i) => set((s) => ({ spesa: [...s.spesa, { ...i, id: uid() }] })),
 

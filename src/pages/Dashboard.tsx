@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { CalendarPlus, ChevronRight, Flame, LineChart, Moon, Pill, Play, Scale, Timer } from 'lucide-react';
 import { useStore } from '../store/useStore';
@@ -7,6 +8,7 @@ import { SUPPLEMENTS, TIMING_LABEL, supplementById } from '../data/supplements';
 import { useTargets } from '../lib/useTargets';
 import { MacroBlock } from '../components/MacroRow';
 import { Anelli, anelliGiornata } from '../components/Anelli';
+import { RegistraCardio } from '../components/RegistraCardio';
 import { kcalMovimento } from '../lib/health';
 import { kcalScheda } from '../lib/burn';
 import { Button, Card, Empty, SectionTitle, Stat, Tag, Warn, cx } from '../components/ui';
@@ -25,6 +27,7 @@ export default function Dashboard() {
   const obiettiviAttivita = useStore((s) => s.obiettiviAttivita);
   const logIntegratori = useStore((s) => s.logIntegratori);
   const segnaIntegratore = useStore((s) => s.segnaIntegratore);
+  const [registraCardio, setRegistraCardio] = useState(false);
 
   const today = oggi();
   const giorno = piano[today];
@@ -172,7 +175,7 @@ export default function Dashboard() {
             <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-raise text-soft">
               <Moon size={18} />
             </span>
-            <div>
+            <div className="min-w-0 flex-1">
               <h3 className="font-semibold">Giorno di riposo</h3>
               <p className="text-xs text-muted">
                 {giorno.cardio
@@ -181,6 +184,9 @@ export default function Dashboard() {
               </p>
             </div>
           </div>
+          <Button full variant="ghost" className="mt-3" onClick={() => setRegistraCardio(true)}>
+            Registra cardio
+          </Button>
         </Card>
       ) : (
         <Empty
@@ -297,6 +303,14 @@ export default function Dashboard() {
           <span className="mt-1.5 block text-xs font-medium">Aderenza</span>
         </Link>
       </div>
+
+      <RegistraCardio
+        data={today}
+        open={registraCardio}
+        onClose={() => setRegistraCardio(false)}
+        modalitaIniziale={giorno?.cardio?.modalita}
+        minutiIniziali={giorno?.cardio?.durataMin}
+      />
 
       <Link
         to="/allena"

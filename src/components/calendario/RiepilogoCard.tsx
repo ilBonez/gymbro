@@ -28,7 +28,13 @@ export function RiepilogoCard({ giornate, titolo }: { giornate: Giornata[]; tito
           <Voce
             label="Allenamenti"
             valore={`${r.allenamentiFatti}/${r.allenamentiPrevisti}`}
-            sub={r.saltati > 0 ? `${r.saltati} saltati` : 'fatti su previsti'}
+            sub={
+              r.seduteCardio > 0
+                ? `+ ${r.seduteCardio} cardio`
+                : r.saltati > 0
+                  ? `${r.saltati} saltati`
+                  : 'fatti su previsti'
+            }
           />
           <Voce
             label="Movimento"

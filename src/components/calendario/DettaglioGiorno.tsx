@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import {
   Activity,
@@ -7,6 +8,7 @@ import {
   Moon,
   Play,
   Scale,
+  Trash2,
   UtensilsCrossed,
 } from 'lucide-react';
 import { Anelli, anelliGiornata } from '../Anelli';
@@ -16,6 +18,7 @@ import { useTargets } from '../../lib/useTargets';
 import { useGiornata } from '../../lib/useGiornata';
 import { ETICHETTA_STATO_GIORNO, statoGiorno } from '../../lib/giornata';
 import { kcalCardio, kcalScheda, nomeCardio } from '../../lib/burn';
+import { RegistraCardio } from '../RegistraCardio';
 import { fmtDurata, labelLungo, oggi } from '../../lib/date';
 import { macroTargets } from '../../lib/nutrition';
 
@@ -30,6 +33,8 @@ export function DettaglioGiorno({
   const nav = useNavigate();
   const g = useGiornata(data);
   const obiettivi = useStore((s) => s.obiettiviAttivita);
+  const removeCardio = useStore((s) => s.removeCardio);
+  const [registra, setRegistra] = useState(false);
   const targets = useTargets(!!g.scheda);
   const today = oggi();
 
@@ -130,13 +135,18 @@ export function DettaglioGiorno({
             <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-carb/12 text-carb">
               <HeartPulse size={18} />
             </span>
-            <div>
+            <div className="min-w-0 flex-1">
               <h3 className="text-sm font-semibold">Solo cardio</h3>
               <p className="text-xs text-muted">
                 {nomeCardio(g.pianificato.cardio.modalita)} · {g.pianificato.cardio.durataMin} min
               </p>
             </div>
           </div>
+          {g.cardio.length === 0 && (
+            <Button full variant="ghost" className="mt-3" onClick={() => setRegistra(true)}>
+              Registra la seduta
+            </Button>
+          )}
         </Card>
       ) : g.pianificato ? (
         <Card>
@@ -177,6 +187,44 @@ export function DettaglioGiorno({
             </Link>
           ))}
         </div>
+      )}
+
+      {g.cardio.length > 0 && (
+        <div className="mt-2 space-y-2">
+          {g.cardio.map((c) => (
+            <div
+              key={c.id}
+              className="flex items-center gap-3 rounded-2xl border border-carb/30 bg-carb/8 px-3.5 py-3"
+            >
+              <HeartPulse size={16} className="shrink-0 text-carb" />
+              <div className="min-w-0 flex-1">
+                <p className="text-sm font-medium">{nomeCardio(c.modalita)}</p>
+                <p className="text-[11px] text-muted">
+                  {c.minuti} min · {c.kcal} kcal{c.kcalAMano && ' (a mano)'}
+                  {c.fcMedia ? ` · ${c.fcMedia} bpm` : ''}
+                </p>
+              </div>
+              <button
+                onClick={() => removeCardio(c.id)}
+                aria-label="Elimina seduta cardio"
+                className="shrink-0 rounded-lg p-1.5 text-muted hover:text-red-400"
+              >
+                <Trash2 size={14} />
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {!g.pianificato?.cardio && (
+        <Button
+          full
+          variant="ghost"
+          className="mt-2 !text-xs"
+          onClick={() => setRegistra(true)}
+        >
+          <HeartPulse size={14} className="mr-1.5 -mt-0.5 inline" /> Aggiungi cardio
+        </Button>
       )}
 
       <SectionTitle
@@ -226,6 +274,14 @@ export function DettaglioGiorno({
           </div>
         </div>
       </Card>
+
+      <RegistraCardio
+        data={data}
+        open={registra}
+        onClose={() => setRegistra(false)}
+        modalitaIniziale={g.pianificato?.cardio?.modalita}
+        minutiIniziali={g.pianificato?.cardio?.durataMin}
+      />
 
       {g.pesoKg !== null && (
         <>
