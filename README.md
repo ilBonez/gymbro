@@ -45,10 +45,10 @@ eri, coi filtri che avevi.
 
 | Sezione | Cosa fa |
 | --- | --- |
-| **Oggi** | Allenamento di oggi, macro della giornata, checklist integratori, peso |
+| **Oggi** | Resoconto della giornata con gli anelli (movimento, esercizio, passi, sonno), allenamento di oggi, macro, checklist integratori |
 | **Allena** | Programmi · Esercizi · Storico. 4 blocchi, 16 schede, 86 esercizi con esecuzione ed errori comuni |
 | **Sessione** | Timer, log di serie/carico/ripetizioni, carico suggerito, record personali, conto alla rovescia per plank e simili, cambio esercizio al volo, playlist Spotify |
-| **Piano** | Calendario: stendi un programma su più settimane (anche solo lun-ven), calorie e passi giorno per giorno |
+| **Piano** | Calendario in quattro viste (giorno, settimana, mese, anno): stendi un programma su più settimane (anche solo lun-ven), con allenamenti, dieta, calorie e passi giorno per giorno |
 | **Dieta** | Oggi · Ricette · Sostituzioni · Spesa · Integratori |
 
 | **Progressi** | Peso e misure · Dieta (aderenza) · Allenamento (scarico, serie per muscolo, volume) |

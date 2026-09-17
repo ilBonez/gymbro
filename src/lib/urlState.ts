@@ -37,6 +37,37 @@ export function useParametroUrl(
   return [valore, imposta];
 }
 
+/**
+ * Più parametri in un colpo solo, con la possibilità di impilare il passaggio.
+ *
+ * Serve ai passaggi di livello — dal mese al giorno, ad esempio — dove cambiano
+ * due chiavi insieme e il tasto indietro deve riportare alla vista di prima:
+ * due `set` separati creerebbero due voci di cronologia, o nessuna.
+ */
+export function useImpostaParametri(): (
+  patch: Record<string, string | null>,
+  opzioni?: { push?: boolean },
+) => void {
+  const [, setParams] = useSearchParams();
+
+  return useCallback(
+    (patch, opzioni) => {
+      setParams(
+        (prec) => {
+          const nuovi = new URLSearchParams(prec);
+          for (const [k, v] of Object.entries(patch)) {
+            if (v === null || v === '') nuovi.delete(k);
+            else nuovi.set(k, v);
+          }
+          return nuovi;
+        },
+        { replace: !opzioni?.push },
+      );
+    },
+    [setParams],
+  );
+}
+
 /** Versione booleana, per gli interruttori tipo "solo preferiti". */
 export function useFlagUrl(chiave: string): [boolean, (v: boolean) => void] {
   const [v, set] = useParametroUrl(chiave, '');

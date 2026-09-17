@@ -14,7 +14,7 @@ import {
   statoHealth,
 } from '../lib/health';
 import type { DatiHealth, StatoHealth } from '../lib/health';
-import { Anelli } from './Anelli';
+import { Anelli, anelliGiornata } from './Anelli';
 import { Button, Card, SectionTitle, Tag, cx } from './ui';
 import { useTargets } from '../lib/useTargets';
 import { oggi } from '../lib/date';
@@ -181,12 +181,15 @@ export function HealthCard() {
           </div>
 
           <Anelli
-            kcal={oggiSalute ? kcalMovimento(oggiSalute) : 0}
-            kcalObiettivo={obiettivi.kcal}
-            passi={oggiSalute?.passi ?? 0}
-            passiObiettivo={obiettivi.passi}
-            sonnoMin={oggiSalute?.sonnoMin ?? 0}
-            sonnoObiettivoMin={Math.round(obiettivi.sonnoOre * 60)}
+            anelli={anelliGiornata(
+              {
+                kcal: oggiSalute ? kcalMovimento(oggiSalute) : 0,
+                minutiEsercizio: oggiSalute?.minutiEsercizio ?? 0,
+                passi: oggiSalute?.passi ?? 0,
+                sonnoMin: oggiSalute?.sonnoMin ?? 0,
+              },
+              obiettivi,
+            )}
           />
 
           {soloStima && (

@@ -1,43 +1,79 @@
 import { useState } from 'react';
-import { useNumeroUrl } from '../lib/urlState';
 import { Link } from 'react-router-dom';
-import { addDays, isSameDay } from 'date-fns';
-import { CalendarRange, ChevronLeft, ChevronRight, Dumbbell, Flame, Footprints, HeartPulse, Moon, Trash2, UtensilsCrossed } from 'lucide-react';
-import { PROGRAMS } from '../data/programs';
+import { addDays, addMonths, addWeeks, addYears, format, parseISO } from 'date-fns';
+import { it } from 'date-fns/locale';
+import { CalendarRange, ChevronLeft, ChevronRight, Trash2, UtensilsCrossed } from 'lucide-react';
 import { useStore } from '../store/useStore';
-import { Button, Card, Empty, SectionTitle, Sheet, cx } from '../components/ui';
-import { GIORNI_IT, inizioSettimana, key, labelMese, oggi, settimana } from '../lib/date';
-import { GOAL_RULES, macroTargets } from '../lib/nutrition';
-import { kcalCardio, kcalScheda } from '../lib/burn';
-import { fmtSonno, kcalMovimento } from '../lib/health';
+import { Button, Card, Empty, SectionTitle, cx } from '../components/ui';
+import { AssegnaGiorno } from '../components/calendario/AssegnaGiorno';
+import { DettaglioGiorno } from '../components/calendario/DettaglioGiorno';
+import { ListaSettimana } from '../components/calendario/ListaSettimana';
+import { GrigliaMese } from '../components/calendario/GrigliaMese';
+import { GrigliaAnno } from '../components/calendario/GrigliaAnno';
+import { useImpostaParametri, useParametroUrl } from '../lib/urlState';
+import { inizioSettimana, key, labelMese, oggi, settimana } from '../lib/date';
+import { GOAL_RULES } from '../lib/nutrition';
 import { useTargets } from '../lib/useTargets';
+
+type Vista = 'giorno' | 'settimana' | 'mese' | 'anno';
+
+const VISTE: { id: Vista; label: string }[] = [
+  { id: 'giorno', label: 'Giorno' },
+  { id: 'settimana', label: 'Settimana' },
+  { id: 'mese', label: 'Mese' },
+  { id: 'anno', label: 'Anno' },
+];
 
 export default function Piano() {
   const piano = useStore((s) => s.piano);
-  const giorniSalute = useStore((s) => s.giorniSalute);
-  const setGiorno = useStore((s) => s.setGiorno);
-  const svuotaGiorno = useStore((s) => s.svuotaGiorno);
   const svuotaPiano = useStore((s) => s.svuotaPiano);
   const targets = useTargets(true);
 
-  const [offset, setOffset] = useNumeroUrl('sett', 0);
-  const [sel, setSel] = useState<string | null>(null);
+  const [vistaRaw, setVista] = useParametroUrl('vista', 'settimana');
+  const [dataSel, setDataSel] = useParametroUrl('d', oggi());
+  const [assegna, setAssegna] = useState<string | null>(null);
+  const impostaParametri = useImpostaParametri();
 
-  const base = addDays(inizioSettimana(), offset * 7);
-  const giorni = settimana(base);
+  const vista = (VISTE.some((v) => v.id === vistaRaw) ? vistaRaw : 'settimana') as Vista;
   const today = oggi();
+  const data = /^\d{4}-\d{2}-\d{2}$/.test(dataSel) ? dataSel : today;
+  const d = parseISO(data);
 
-  const selGiorno = sel ? piano[sel] : undefined;
-  const selProg = selGiorno ? PROGRAMS.find((p) => p.id === selGiorno.programId) : undefined;
-
+  const giorniSettimana = settimana(d);
   const pianificati = Object.keys(piano).length;
+
+  /** Un passo avanti o indietro, della durata della vista corrente. */
+  const sposta = (verso: 1 | -1) => {
+    const nuovo =
+      vista === 'giorno'
+        ? addDays(d, verso)
+        : vista === 'settimana'
+          ? addWeeks(d, verso)
+          : vista === 'mese'
+            ? addMonths(d, verso)
+            : addYears(d, verso);
+    setDataSel(key(nuovo));
+  };
+
+  const etichetta =
+    vista === 'giorno'
+      ? format(d, 'EEEE d MMMM', { locale: it })
+      : vista === 'settimana'
+        ? `${format(inizioSettimana(d), 'd')} – ${format(addDays(inizioSettimana(d), 6), 'd MMM yyyy', { locale: it })}`
+        : vista === 'mese'
+          ? labelMese(d)
+          : String(d.getFullYear());
+
+  // scendere di livello impila un passaggio: il tasto indietro riporta alla vista di prima
+  const apriGiorno = (k: string) =>
+    impostaParametri({ d: k === today ? null : k, vista: 'giorno' }, { push: true });
 
   return (
     <div>
       <div className="flex items-start justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Il tuo piano</h1>
-          <p className="mt-1 text-sm text-muted">Tocca un giorno per assegnare scheda o riposo.</p>
+          <h1 className="text-2xl font-bold tracking-tight">Calendario</h1>
+          <p className="mt-1 text-sm text-muted">Allenamenti, dieta e attività, giorno per giorno.</p>
         </div>
         {pianificati > 0 && (
           <button
@@ -50,17 +86,40 @@ export default function Piano() {
         )}
       </div>
 
-      <div className="mt-4 flex items-center justify-between rounded-2xl border border-line/70 bg-surface px-2 py-2">
-        <button onClick={() => setOffset(offset - 1)} className="rounded-lg p-2 text-soft hover:bg-raise">
+      <div className="mt-4 flex gap-1 rounded-2xl border border-line/70 bg-surface p-1">
+        {VISTE.map((v) => (
+          <button
+            key={v.id}
+            onClick={() => setVista(v.id)}
+            className={cx(
+              'flex-1 rounded-xl py-1.5 text-xs font-medium transition-colors',
+              vista === v.id ? 'bg-brand-500 text-onbrand' : 'text-soft hover:bg-raise',
+            )}
+          >
+            {v.label}
+          </button>
+        ))}
+      </div>
+
+      <div className="mt-2 flex items-center justify-between rounded-2xl border border-line/70 bg-surface px-2 py-1.5">
+        <button
+          onClick={() => sposta(-1)}
+          aria-label="Periodo precedente"
+          className="rounded-lg p-2 text-soft hover:bg-raise"
+        >
           <ChevronLeft size={18} />
         </button>
         <div className="text-center">
-          <p className="text-sm font-semibold capitalize">{labelMese(base)}</p>
-          <button onClick={() => setOffset(0)} className="text-[11px] text-brandink">
-            {offset === 0 ? 'Settimana corrente' : 'Torna a oggi'}
+          <p className="text-sm font-semibold capitalize">{etichetta}</p>
+          <button onClick={() => setDataSel(today)} className="text-[11px] text-brandink">
+            {data === today ? 'Oggi' : 'Torna a oggi'}
           </button>
         </div>
-        <button onClick={() => setOffset(offset + 1)} className="rounded-lg p-2 text-soft hover:bg-raise">
+        <button
+          onClick={() => sposta(1)}
+          aria-label="Periodo successivo"
+          className="rounded-lg p-2 text-soft hover:bg-raise"
+        >
           <ChevronRight size={18} />
         </button>
       </div>
@@ -80,111 +139,30 @@ export default function Piano() {
         </div>
       )}
 
-      <SectionTitle>Settimana</SectionTitle>
-      <div className="space-y-2">
-        {giorni.map((d, i) => {
-          const k = key(d);
-          const g = piano[k];
-          const prog = g ? PROGRAMS.find((p) => p.id === g.programId) : undefined;
-          const w = prog?.workouts.find((x) => x.id === g?.workoutId);
-          const isToday = isSameDay(d, new Date());
-          const salute = giorniSalute[k];
-          // se non ci sono ancora dati reali mostriamo quanto costerebbe il giorno pianificato
-          const stimaKcal =
-            targets && w
-              ? kcalScheda(w, prog!.goal, targets.pesoKg)
-              : targets && g?.cardio
-                ? kcalCardio(g.cardio.modalita, g.cardio.durataMin, targets.pesoKg)
-                : 0;
-
-          return (
-            <button
-              key={k}
-              onClick={() => setSel(k)}
-              className={cx(
-                'flex w-full items-center gap-3 rounded-2xl border px-3.5 py-3 text-left transition-colors',
-                isToday ? 'border-brand-500/50 bg-brand-500/8' : 'border-line/70 bg-surface',
-              )}
-            >
-              <div className="w-11 shrink-0 text-center">
-                <p className="text-[10px] font-semibold uppercase text-muted">{GIORNI_IT[i]}</p>
-                <p className={cx('text-lg font-bold tabular-nums leading-tight', isToday && 'text-brandink')}>
-                  {d.getDate()}
-                </p>
-              </div>
-
-              <div className="min-w-0 flex-1">
-                {w ? (
-                  <>
-                    <p className="truncate text-sm font-semibold">{w.nome}</p>
-                    <p className="truncate text-[11px] text-muted">
-                      {w.focus} · {w.durataMin} min
-                    </p>
-                  </>
-                ) : g ? (
-                  <>
-                    <p className="text-sm font-medium text-soft">
-                      {g.cardio ? 'Cardio' : 'Riposo'}
-                    </p>
-                    <p className="text-[11px] text-muted">
-                      {g.cardio
-                        ? `${g.cardio.tipo} · ${g.cardio.durataMin} min`
-                        : (g.note ?? 'Recupero attivo: camminata, mobilità, sonno')}
-                    </p>
-                  </>
-                ) : (
-                  <p className="text-sm text-muted">— libero</p>
-                )}
-
-                {(salute || stimaKcal > 0) && (
-                  <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-[10px] text-muted">
-                    {salute && kcalMovimento(salute) > 0 && (
-                      <span className="inline-flex items-center gap-1">
-                        <Flame size={10} className="text-brand-500" />
-                        {kcalMovimento(salute).toLocaleString('it-IT')} kcal
-                      </span>
-                    )}
-                    {!salute && stimaKcal > 0 && (
-                      <span className="inline-flex items-center gap-1">
-                        <Flame size={10} className="text-brand-500" />~
-                        {stimaKcal.toLocaleString('it-IT')} kcal previste
-                      </span>
-                    )}
-                    {salute && salute.passi > 0 && (
-                      <span className="inline-flex items-center gap-1">
-                        <Footprints size={10} className="text-prot" />
-                        {salute.passi.toLocaleString('it-IT')}
-                      </span>
-                    )}
-                    {salute && salute.sonnoMin > 0 && (
-                      <span className="inline-flex items-center gap-1">
-                        <Moon size={10} className="text-sonno" />
-                        {fmtSonno(salute.sonnoMin)}
-                      </span>
-                    )}
-                  </div>
-                )}
-              </div>
-
-              {prog && (
-                <span className="shrink-0">
-                  {w ? (
-                    <Dumbbell size={16} className="text-brandink" />
-                  ) : g?.cardio ? (
-                    <HeartPulse size={16} className="text-carb" />
-                  ) : (
-                    <Moon size={16} className="text-muted" />
-                  )}
-                </span>
-              )}
-            </button>
-          );
-        })}
+      <div className="mt-4">
+        {vista === 'giorno' && <DettaglioGiorno data={data} onAssegna={setAssegna} />}
+        {vista === 'settimana' && (
+          <ListaSettimana giorni={giorniSettimana} onApri={apriGiorno} onAssegna={setAssegna} />
+        )}
+        {vista === 'mese' && <GrigliaMese mese={d} onApri={apriGiorno} />}
+        {vista === 'anno' && (
+          <GrigliaAnno
+            anno={d.getFullYear()}
+            onApri={apriGiorno}
+            onMese={(m) => impostaParametri({ d: key(m), vista: 'mese' }, { push: true })}
+          />
+        )}
       </div>
 
-      {targets && (
+      {vista === 'settimana' && targets && (
         <>
-          <SectionTitle action={<Link to="/dieta" className="text-xs text-brandink">Vai alla dieta</Link>}>
+          <SectionTitle
+            action={
+              <Link to="/dieta" className="text-xs text-brandink">
+                Vai alla dieta
+              </Link>
+            }
+          >
             Dieta della settimana
           </SectionTitle>
           <Card>
@@ -195,8 +173,8 @@ export default function Piano() {
               <div>
                 <p className="text-sm font-semibold">{GOAL_RULES[targets.goal].label}</p>
                 <p className="text-[11px] text-muted">
-                  {targets.macro.kcal} kcal · P {targets.macro.proteine} / C {targets.macro.carbs} / G{' '}
-                  {targets.macro.grassi} g nei giorni di allenamento
+                  {targets.macro.kcal} kcal · P {targets.macro.proteine} / C {targets.macro.carbs} /
+                  G {targets.macro.grassi} g nei giorni di allenamento
                 </p>
               </div>
             </div>
@@ -204,106 +182,7 @@ export default function Piano() {
         </>
       )}
 
-      <Sheet open={!!sel} onClose={() => setSel(null)} title={sel ?? ''}>
-        {sel && (
-          <div className="space-y-4">
-            <div>
-              <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted">Programma</p>
-              <div className="space-y-2">
-                {PROGRAMS.map((p) => (
-                  <button
-                    key={p.id}
-                    onClick={() =>
-                      setGiorno({
-                        data: sel,
-                        programId: p.id,
-                        workoutId: selGiorno?.programId === p.id ? selGiorno.workoutId : p.workouts[0].id,
-                      })
-                    }
-                    className={cx(
-                      'w-full rounded-xl border px-3.5 py-2.5 text-left text-sm',
-                      selGiorno?.programId === p.id
-                        ? 'border-brand-500 bg-brand-500/10 text-brandink'
-                        : 'border-line bg-raise text-soft',
-                    )}
-                  >
-                    {p.nome}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {selProg && (
-              <div>
-                <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted">Scheda del giorno</p>
-                <div className="space-y-2">
-                  {selProg.workouts.map((w) => (
-                    <button
-                      key={w.id}
-                      onClick={() => setGiorno({ data: sel, programId: selProg.id, workoutId: w.id })}
-                      className={cx(
-                        'w-full rounded-xl border px-3.5 py-2.5 text-left',
-                        selGiorno?.workoutId === w.id
-                          ? 'border-brand-500 bg-brand-500/10'
-                          : 'border-line bg-raise',
-                      )}
-                    >
-                      <span className="block text-sm font-medium">{w.nome}</span>
-                      <span className="block text-[11px] text-muted">{w.focus}</span>
-                    </button>
-                  ))}
-
-                  <button
-                    onClick={() =>
-                      setGiorno({
-                        data: sel,
-                        programId: selProg.id,
-                        workoutId: null,
-                        cardio: selProg.cardio
-                          ? {
-                              tipo: selProg.cardio.tipo,
-                              modalita: selProg.cardio.modalita,
-                              durataMin: selProg.cardio.durataMin,
-                            }
-                          : null,
-                      })
-                    }
-                    className={cx(
-                      'w-full rounded-xl border px-3.5 py-2.5 text-left',
-                      selGiorno && selGiorno.workoutId === null
-                        ? 'border-brand-500 bg-brand-500/10'
-                        : 'border-line bg-raise',
-                    )}
-                  >
-                    <span className="block text-sm font-medium">Riposo / solo cardio</span>
-                    <span className="block text-[11px] text-muted">
-                      {selProg.cardio
-                        ? `${selProg.cardio.tipo}, ${selProg.cardio.durataMin} min`
-                        : 'Recupero completo'}
-                    </span>
-                  </button>
-                </div>
-              </div>
-            )}
-
-            {selGiorno && (
-              <Button full variant="danger" onClick={() => { svuotaGiorno(sel); setSel(null); }}>
-                Libera il giorno
-              </Button>
-            )}
-
-            {targets && (
-              <p className="text-[11px] text-muted">
-                Dieta di quel giorno:{' '}
-                {selGiorno?.workoutId
-                  ? `${targets.macro.kcal} kcal (allenamento)`
-                  : `${macroTargets(targets.goal, targets.pesoKg, targets.tdee, false).kcal} kcal (riposo)`}
-                . {sel === today && 'È oggi.'}
-              </p>
-            )}
-          </div>
-        )}
-      </Sheet>
+      <AssegnaGiorno data={assegna} onClose={() => setAssegna(null)} />
     </div>
   );
 }

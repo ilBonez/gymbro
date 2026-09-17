@@ -48,12 +48,15 @@ export interface GiornoSalute {
   kcalStimateDaPassi: number;
   sonnoMin: number;
   kcalAllenamento: number; // da sessioni di esercizio registrate su Health Connect
+  /** minuti di esercizio registrati: il posto che su iPhone occupa il tempo in piedi */
+  minutiEsercizio?: number;
 }
 
 export interface ObiettiviAttivita {
   kcal: number;
   passi: number;
   sonnoOre: number;
+  minutiEsercizio: number;
 }
 
 export interface Playlist {
@@ -156,7 +159,7 @@ export const useStore = create<State>()(
         fcRiposo: null,
       },
       giorniSalute: {},
-      obiettiviAttivita: { kcal: 500, passi: 9000, sonnoOre: 7.5 },
+      obiettiviAttivita: { kcal: 500, passi: 9000, sonnoOre: 7.5, minutiEsercizio: 45 },
       playlist: {},
       tema: 'sistema',
       notifiche: NOTIFICHE_DEFAULT,

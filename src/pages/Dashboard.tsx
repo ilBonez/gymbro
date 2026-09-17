@@ -5,7 +5,7 @@ import { PROGRAMS } from '../data/programs';
 import { SUPPLEMENTS, TIMING_LABEL, supplementById } from '../data/supplements';
 import { useTargets } from '../lib/useTargets';
 import { MacroBlock } from '../components/MacroRow';
-import { Anelli } from '../components/Anelli';
+import { Anelli, anelliGiornata } from '../components/Anelli';
 import { kcalMovimento } from '../lib/health';
 import { kcalScheda } from '../lib/burn';
 import { Button, Card, Empty, SectionTitle, Stat, Tag, Warn, cx } from '../components/ui';
@@ -49,6 +49,17 @@ export default function Dashboard() {
     { kcal: 0, proteine: 0, carbs: 0, grassi: 0 },
   );
 
+  // gli anelli restano al centro della home anche senza dati: mostrano zero
+  const anelli = anelliGiornata(
+    {
+      kcal: saluteOggi ? kcalMovimento(saluteOggi) : 0,
+      minutiEsercizio: saluteOggi?.minutiEsercizio ?? 0,
+      passi: saluteOggi?.passi ?? 0,
+      sonnoMin: saluteOggi?.sonnoMin ?? 0,
+    },
+    obiettiviAttivita,
+  );
+
   const ultimoPeso = pesi[pesi.length - 1];
   const settimanaFa = [...pesi].reverse().find((p) => giorniTra(p.data, today) >= 7);
   const delta = ultimoPeso && settimanaFa ? +(ultimoPeso.pesoKg - settimanaFa.pesoKg).toFixed(1) : null;
@@ -87,7 +98,49 @@ export default function Dashboard() {
         </Warn>
       )}
 
-      <SectionTitle>Oggi</SectionTitle>
+      <SectionTitle
+        action={
+          <Link to="/piano?vista=giorno" className="text-xs text-brandink">
+            Calendario
+          </Link>
+        }
+      >
+        Resoconto di oggi
+      </SectionTitle>
+      <Card>
+        <Anelli anelli={anelli} />
+        <div className="mt-3.5 grid grid-cols-3 gap-2 border-t border-line pt-3.5 text-center">
+          <div>
+            <p className="text-sm font-bold tabular-nums">
+              {Math.round(consumati.kcal).toLocaleString('it-IT')}
+            </p>
+            <p className="text-[10px] text-muted">kcal assunte su {targets.macro.kcal}</p>
+          </div>
+          <div>
+            <p className="text-sm font-bold tabular-nums">{Math.round(consumati.proteine)} g</p>
+            <p className="text-[10px] text-muted">proteine su {targets.macro.proteine}</p>
+          </div>
+          <div>
+            <p className="text-sm font-bold tabular-nums">
+              {kcalPrevisteAllenamento > 0 ? `~${kcalPrevisteAllenamento}` : '—'}
+            </p>
+            <p className="text-[10px] text-muted">
+              {kcalPrevisteAllenamento > 0 ? "kcal dall'allenamento" : 'niente in programma'}
+            </p>
+          </div>
+        </div>
+        {!saluteOggi && (
+          <p className="mt-3 text-[11px] leading-relaxed text-muted">
+            Passi, calorie e sonno arrivano dal telefono.{' '}
+            <Link to="/profilo" className="text-brandink">
+              Collega Health Connect
+            </Link>{' '}
+            per riempire gli anelli da solo.
+          </p>
+        )}
+      </Card>
+
+      <SectionTitle>Allenamento</SectionTitle>
       {workout && programma ? (
         <Card className="!border-brand-500/35 !bg-gradient-to-br from-brand-500/12 to-surface">
           <div className="flex items-start justify-between gap-3">
@@ -135,30 +188,6 @@ export default function Dashboard() {
           sub="Scegli un programma e appoggialo sul calendario: da lì l'app costruisce workout, dieta e spesa."
           action={<Button onClick={() => nav('/piano')}>Pianifica</Button>}
         />
-      )}
-
-      {saluteOggi && (
-        <>
-          <SectionTitle action={<Link to="/progressi" className="text-xs text-brandink">Dettagli</Link>}>
-            Attività di oggi
-          </SectionTitle>
-          <Card>
-            <Anelli
-              kcal={kcalMovimento(saluteOggi)}
-              kcalObiettivo={obiettiviAttivita.kcal}
-              passi={saluteOggi.passi}
-              passiObiettivo={obiettiviAttivita.passi}
-              sonnoMin={saluteOggi.sonnoMin}
-              sonnoObiettivoMin={Math.round(obiettiviAttivita.sonnoOre * 60)}
-            />
-            {kcalPrevisteAllenamento > 0 && (
-              <p className="mt-3 border-t border-line pt-3 text-[11px] text-muted">
-                L'allenamento di oggi vale circa{' '}
-                <b className="text-brandink">{kcalPrevisteAllenamento} kcal</b> in più, se lo fai.
-              </p>
-            )}
-          </Card>
-        </>
       )}
 
       <SectionTitle action={<Link to="/dieta" className="text-xs text-brandink">Dettagli</Link>}>

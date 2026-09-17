@@ -168,9 +168,17 @@ async function sonnoPerGiorno(giorni: number): Promise<Map<string, number>> {
   return out;
 }
 
-/** Calorie delle sessioni di allenamento registrate da altre app. */
-async function allenamentiPerGiorno(giorni: number): Promise<Map<string, number>> {
-  const out = new Map<string, number>();
+/**
+ * Calorie e minuti delle sessioni di allenamento registrate da altre app.
+ *
+ * Nota: Health Connect non ha un equivalente del "tempo in piedi" di Apple —
+ * e' una metrica che l'Apple Watch calcola per conto suo e non esiste su
+ * Android. Al suo posto usiamo i minuti di esercizio, che invece ci sono.
+ */
+async function allenamentiPerGiorno(
+  giorni: number,
+): Promise<Map<string, { kcal: number; minuti: number }>> {
+  const out = new Map<string, { kcal: number; minuti: number }>();
   try {
     const { workouts } = await Health.queryWorkouts({
       startDate: giorniFa(giorni),
@@ -178,7 +186,15 @@ async function allenamentiPerGiorno(giorni: number): Promise<Map<string, number>
     });
     for (const w of workouts) {
       const k = giorno(w.endDate ?? w.startDate);
-      out.set(k, (out.get(k) ?? 0) + (w.totalEnergyBurned ?? 0));
+      const minuti =
+        w.endDate && w.startDate
+          ? (new Date(w.endDate).getTime() - new Date(w.startDate).getTime()) / 60000
+          : 0;
+      const prec = out.get(k) ?? { kcal: 0, minuti: 0 };
+      out.set(k, {
+        kcal: prec.kcal + (w.totalEnergyBurned ?? 0),
+        minuti: prec.minuti + Math.max(0, Math.min(minuti, 8 * 60)),
+      });
     }
   } catch {
     /* niente sessioni registrate */
@@ -225,6 +241,7 @@ export async function leggiDati(giorni = 14, pesoKg = 75): Promise<DatiHealth> {
       kcalStimateDaPassi: 0,
       sonnoMin: 0,
       kcalAllenamento: 0,
+      minutiEsercizio: 0,
     };
     mappa.set(k, g);
     return g;
@@ -237,7 +254,11 @@ export async function leggiDati(giorni = 14, pesoKg = 75): Promise<DatiHealth> {
   }
   for (const s of kcal) tocca(giorno(s.startDate)).kcalAttive = Math.round(s.value);
   for (const [k, min] of sonno) tocca(k).sonnoMin = Math.round(min);
-  for (const [k, v] of allenamenti) tocca(k).kcalAllenamento = Math.round(v);
+  for (const [k, v] of allenamenti) {
+    const g = tocca(k);
+    g.kcalAllenamento = Math.round(v.kcal);
+    g.minutiEsercizio = Math.round(v.minuti);
+  }
 
   return {
     ...peso,
@@ -278,6 +299,10 @@ export function mediaPassi(giorni: GiornoSalute[]): number | null {
 
 export function mediaSonnoMin(giorni: GiornoSalute[]): number | null {
   return media(giorni.map((g) => g.sonnoMin));
+}
+
+export function mediaMinutiEsercizio(giorni: GiornoSalute[]): number | null {
+  return media(giorni.map((g) => g.minutiEsercizio ?? 0));
 }
 
 export function fmtSonno(minuti: number): string {
