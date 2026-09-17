@@ -18,6 +18,8 @@ export interface Profile {
   attivita: ActivityLevel;
   obiettivo: Goal;
   pesoTargetKg?: number;
+  /** fabbisogno misurato dai dati, quando lo preferisci alla formula */
+  tdeeManuale?: number;
   creato: string; // ISO
 }
 

@@ -146,7 +146,12 @@ export default function Profilo() {
       <div className="grid grid-cols-2 gap-3">
         <Stat label="BMI" value={iBmi} tone={cat.color} sub={cat.label} />
         <Stat label="Metabolismo basale" value={targets.bmr} unit="kcal" />
-        <Stat label="Fabbisogno (TDEE)" value={targets.tdee} unit="kcal" />
+        <Stat
+          label="Fabbisogno (TDEE)"
+          value={targets.tdee}
+          unit="kcal"
+          sub={targets.daMisura ? 'misurato dai tuoi dati' : undefined}
+        />
         <Stat
           label="Target allenamento"
           value={targets.macro.kcal}
