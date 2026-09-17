@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { Link, Navigate, useNavigate, useParams } from 'react-router-dom';
 import { AlertTriangle, CalendarPlus, ChevronRight, Flame, HeartPulse, TrendingDown } from 'lucide-react';
-import { PROGRAMS } from '../data/programs';
 import { useStore } from '../store/useStore';
+import { programma as trovaProgramma } from '../lib/catalog';
 import { Button, Card, Field, SectionTitle, Sheet, Tag, Warn, inputCls } from '../components/ui';
 import { GIORNI_IT, oggi } from '../lib/date';
 import { GOAL_RULES, macroTargets } from '../lib/nutrition';
@@ -20,7 +20,10 @@ import {
 export default function ProgramDetail() {
   const { id } = useParams();
   const nav = useNavigate();
-  const programma = PROGRAMS.find((p) => p.id === id);
+  const schedeMie = useStore((s) => s.schedeMie);
+  // le tue schede cambiano: il selettore qui sopra fa rileggere il programma finto
+  void schedeMie;
+  const programma = id ? trovaProgramma(id) : undefined;
 
   const applica = useStore((s) => s.applicaProgramma);
   const aggiornaProfilo = useStore((s) => s.aggiornaProfilo);

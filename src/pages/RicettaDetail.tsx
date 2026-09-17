@@ -1,7 +1,7 @@
 import { useState } from 'react';
-import { Navigate, useParams } from 'react-router-dom';
-import { Check, Clock, ExternalLink, Minus, Plus, ShoppingCart, Users } from 'lucide-react';
-import { alimento, ricetta } from '../lib/catalog';
+import { Link, Navigate, useParams } from 'react-router-dom';
+import { Check, Clock, ExternalLink, Minus, PencilLine, Plus, ShoppingCart, Users } from 'lucide-react';
+import { alimento, ricetta, ricettaMia } from '../lib/catalog';
 import { useStore } from '../store/useStore';
 import { MOMENTO_LABEL } from '../lib/diet';
 import { Button, Card, SectionTitle, Tag } from '../components/ui';
@@ -47,7 +47,18 @@ export default function RicettaDetail() {
 
   return (
     <div>
-      <h1 className="text-2xl font-bold leading-tight tracking-tight">{r.nome}</h1>
+      <div className="flex items-start justify-between gap-3">
+        <h1 className="text-2xl font-bold leading-tight tracking-tight">{r.nome}</h1>
+        {ricettaMia(r.id) && (
+          <Link
+            to={`/dieta/ricetta/${r.id}/modifica`}
+            aria-label="Modifica ricetta"
+            className="mt-1 shrink-0 rounded-lg p-2 text-muted hover:bg-raise hover:text-ink"
+          >
+            <PencilLine size={17} />
+          </Link>
+        )}
+      </div>
 
       <div className="mt-3 flex flex-wrap gap-1.5">
         {r.momenti.map((mm) => (

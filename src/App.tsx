@@ -9,6 +9,7 @@ import Dashboard from './pages/Dashboard';
 import Allena from './pages/Allena';
 import ProgramDetail from './pages/ProgramDetail';
 import WorkoutDetail from './pages/WorkoutDetail';
+import SchedaNuova from './pages/SchedaNuova';
 import Sessione from './pages/Sessione';
 import Esercizi from './pages/Esercizi';
 import EsercizioDetail from './pages/EsercizioDetail';
@@ -17,6 +18,7 @@ import Dieta from './pages/Dieta';
 import DietaRicette from './pages/DietaRicette';
 import DietaSostituzioni from './pages/DietaSostituzioni';
 import RicettaDetail from './pages/RicettaDetail';
+import RicettaNuova from './pages/RicettaNuova';
 import Integratori from './pages/Integratori';
 import Spesa from './pages/Spesa';
 // i grafici (recharts) pesano: caricati solo quando servono
@@ -49,6 +51,8 @@ export default function App() {
         <Route path="/" element={<Dashboard />} />
         <Route path="/allena" element={<Allena />} />
         <Route path="/allena/programma/:id" element={<ProgramDetail />} />
+        <Route path="/allena/scheda/nuova" element={<SchedaNuova />} />
+        <Route path="/allena/scheda/:id/modifica" element={<SchedaNuova />} />
         <Route path="/allena/workout/:programId/:workoutId" element={<WorkoutDetail />} />
         <Route path="/esercizi" element={<Esercizi />} />
         <Route path="/esercizi/:id" element={<EsercizioDetail />} />
@@ -57,7 +61,9 @@ export default function App() {
         <Route path="/dieta" element={<Dieta />} />
         <Route path="/dieta/ricette" element={<DietaRicette />} />
         <Route path="/dieta/sostituzioni" element={<DietaSostituzioni />} />
+        <Route path="/dieta/ricetta/nuova" element={<RicettaNuova />} />
         <Route path="/dieta/ricetta/:id" element={<RicettaDetail />} />
+        <Route path="/dieta/ricetta/:id/modifica" element={<RicettaNuova />} />
         <Route path="/integratori" element={<Integratori />} />
         <Route path="/spesa" element={<Spesa />} />
         <Route path="/progressi" element={<Progressi />} />

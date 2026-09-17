@@ -63,12 +63,13 @@ export interface PastoPianificato {
   grassi: number;
 }
 
-function candidati(momento: Meal, goal: Goal): Recipe[] {
-  const esatti = RECIPES.filter((r) => r.momenti.includes(momento) && r.fasi.includes(goal));
+function candidati(momento: Meal, goal: Goal, extra: Recipe[]): Recipe[] {
+  const tutte = extra.length > 0 ? [...extra, ...RECIPES] : RECIPES;
+  const esatti = tutte.filter((r) => r.momenti.includes(momento) && r.fasi.includes(goal));
   if (esatti.length) return esatti;
-  const soloMomento = RECIPES.filter((r) => r.momenti.includes(momento));
+  const soloMomento = tutte.filter((r) => r.momenti.includes(momento));
   if (soloMomento.length) return soloMomento;
-  return RECIPES;
+  return tutte;
 }
 
 function arrotonda(v: number): number {
@@ -89,11 +90,13 @@ export function generaGiornoDieta(
   goal: Goal,
   targets: MacroTargets,
   allenamento: boolean,
+  /** ricette scritte dall'utente: concorrono al menu come quelle del ricettario */
+  extra: Recipe[] = [],
 ): PastoPianificato[] {
   const usati = new Set<string>();
 
   return ripartizione(allenamento).map(({ momento, quota }) => {
-    const tutti = candidati(momento, goal);
+    const tutti = candidati(momento, goal, extra);
     // niente ricette ripetute nello stesso giorno, a meno che non resti altro
     const liberi = tutti.filter((r) => !usati.has(r.id));
     const pool = liberi.length > 0 ? liberi : tutti;

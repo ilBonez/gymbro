@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Link, Navigate, useNavigate, useParams } from 'react-router-dom';
-import { ChevronRight, Flame, Music, Play, Snowflake, Timer } from 'lucide-react';
-import { esercizio, programma, scheda } from '../lib/catalog';
+import { ChevronRight, Flame, Music, PencilLine, Play, Snowflake, Timer } from 'lucide-react';
+import { esercizio, programma, scheda, schedaMia } from '../lib/catalog';
 import { useStore } from '../store/useStore';
 import { Button, Card, SectionTitle, Tag } from '../components/ui';
 import type { LoggedExercise } from '../types';
@@ -47,10 +47,22 @@ export default function WorkoutDetail() {
   return (
     <div>
       <Tag>{prog.nome}</Tag>
-      <h1 className="mt-2 text-2xl font-bold tracking-tight">{w.nome}</h1>
+      <div className="flex items-start justify-between gap-3">
+        <h1 className="mt-2 text-2xl font-bold tracking-tight">{w.nome}</h1>
+        {schedaMia(w.id) && (
+          <Link
+            to={`/allena/scheda/${w.id}/modifica`}
+            aria-label="Modifica scheda"
+            className="mt-3 shrink-0 rounded-lg p-2 text-muted hover:bg-raise hover:text-ink"
+          >
+            <PencilLine size={17} />
+          </Link>
+        )}
+      </div>
       <p className="mt-1 text-sm text-soft">{w.focus}</p>
       <p className="mt-2 inline-flex items-center gap-1.5 text-xs text-muted">
-        <Timer size={13} /> ~{w.durataMin} minuti · {w.esercizi.length} esercizi
+        <Timer size={13} /> ~{w.durataMin} minuti · {w.esercizi.length}{' '}
+        {w.esercizi.length === 1 ? 'esercizio' : 'esercizi'}
         {targets && (
           <>
             {' · '}

@@ -2,6 +2,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { CalendarPlus, ChevronRight, Flame, LineChart, Moon, Pill, Play, Scale, Timer } from 'lucide-react';
 import { useStore } from '../store/useStore';
 import { PROGRAMS } from '../data/programs';
+import { programma as trovaProgramma } from '../lib/catalog';
 import { SUPPLEMENTS, TIMING_LABEL, supplementById } from '../data/supplements';
 import { useTargets } from '../lib/useTargets';
 import { MacroBlock } from '../components/MacroRow';
@@ -27,7 +28,7 @@ export default function Dashboard() {
 
   const today = oggi();
   const giorno = piano[today];
-  const programma = giorno ? PROGRAMS.find((p) => p.id === giorno.programId) : undefined;
+  const programma = giorno ? trovaProgramma(giorno.programId) : undefined;
   const workout = programma?.workouts.find((w) => w.id === giorno?.workoutId);
   const allenamentoOggi = !!workout;
 

@@ -1,5 +1,5 @@
-import { PROGRAMS } from '../../data/programs';
 import { useStore } from '../../store/useStore';
+import { programma as trovaProgramma, tuttiIProgrammi } from '../../lib/catalog';
 import { useTargets } from '../../lib/useTargets';
 import { macroTargets } from '../../lib/nutrition';
 import { Button, Sheet, cx } from '../ui';
@@ -8,12 +8,16 @@ import { labelLungo, oggi } from '../../lib/date';
 /** Foglio per assegnare a un giorno una scheda, il cardio o il riposo. */
 export function AssegnaGiorno({ data, onClose }: { data: string | null; onClose: () => void }) {
   const piano = useStore((s) => s.piano);
+  // le schede tue vivono nello store: senza questo selettore la lista non si aggiorna
+  const schedeMie = useStore((s) => s.schedeMie);
   const setGiorno = useStore((s) => s.setGiorno);
   const svuotaGiorno = useStore((s) => s.svuotaGiorno);
   const targets = useTargets(true);
 
   const corrente = data ? piano[data] : undefined;
-  const prog = corrente ? PROGRAMS.find((p) => p.id === corrente.programId) : undefined;
+  const prog = corrente ? trovaProgramma(corrente.programId) : undefined;
+  const programmi = tuttiIProgrammi();
+  void schedeMie;
 
   return (
     <Sheet
@@ -26,7 +30,7 @@ export function AssegnaGiorno({ data, onClose }: { data: string | null; onClose:
           <div>
             <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted">Programma</p>
             <div className="space-y-2">
-              {PROGRAMS.map((p) => (
+              {programmi.map((p) => (
                 <button
                   key={p.id}
                   onClick={() =>

@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Check, Clock, PartyPopper, Pill, Plus, RefreshCw, ShoppingCart, Trash2 } from 'lucide-react';
+import { BookmarkPlus, Check, Clock, PartyPopper, Pill, Plus, RefreshCw, ShoppingCart, Trash2 } from 'lucide-react';
 import { useStore } from '../store/useStore';
 import { useTargets } from '../lib/useTargets';
 import { MOMENTO_LABEL, gapMacro, generaGiornoDieta, listaSpesaDaPasti, fmtQta, totaliGiorno } from '../lib/diet';
@@ -30,6 +30,7 @@ function MenuOggi() {
   const addPasto = useStore((s) => s.addPasto);
   const removePasto = useStore((s) => s.removePasto);
   const aggiungiLista = useStore((s) => s.aggiungiListaSpesa);
+  const ricetteMie = useStore((s) => s.ricetteMie);
 
   const allenamentoOggi = !!piano[today]?.workoutId;
   const targets = useTargets(allenamentoOggi);
@@ -37,8 +38,9 @@ function MenuOggi() {
   const [aggiungi, setAggiungi] = useState(false);
 
   const menu = useMemo(
-    () => (targets ? generaGiornoDieta(today, targets.goal, targets.macro, allenamentoOggi) : []),
-    [targets, today, allenamentoOggi],
+    () =>
+      targets ? generaGiornoDieta(today, targets.goal, targets.macro, allenamentoOggi, ricetteMie) : [],
+    [targets, today, allenamentoOggi, ricetteMie],
   );
 
   if (!targets) return null;
@@ -64,7 +66,7 @@ function MenuOggi() {
     const settimana = Array.from({ length: 7 }, (_, i) => {
       const d = key(addDays(new Date(), i));
       const allena = !!piano[d]?.workoutId;
-      return generaGiornoDieta(d, targets.goal, targets.macro, allena);
+      return generaGiornoDieta(d, targets.goal, targets.macro, allena, ricetteMie);
     });
     const voci = listaSpesaDaPasti(settimana);
     const n = aggiungiLista(
@@ -255,6 +257,15 @@ function MenuOggi() {
                     {MOMENTO_LABEL[p.momento]} · {p.kcal} kcal · P {p.proteine} · C {p.carbs} · G {p.grassi}
                   </p>
                 </div>
+                {!p.recipeId && (
+                  <Link
+                    to={`/dieta/ricetta/nuova?nome=${encodeURIComponent(p.nome)}&kcal=${p.kcal}&p=${p.proteine}&c=${p.carbs}&g=${p.grassi}&momento=${p.momento}`}
+                    aria-label={`Salva ${p.nome} come ricetta`}
+                    className="shrink-0 rounded-lg p-1.5 text-muted hover:text-brandink"
+                  >
+                    <BookmarkPlus size={14} />
+                  </Link>
+                )}
                 <button
                   onClick={() => removePasto(p.id)}
                   className="shrink-0 rounded-lg p-1.5 text-muted hover:text-red-500"

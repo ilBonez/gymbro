@@ -9,8 +9,9 @@ import type {
   ShoppingItem,
   WeightEntry,
 } from '../types';
-import { PROGRAMS } from '../data/programs';
-import type { Meal } from '../data/recipes';
+import type { WorkoutTemplate } from '../data/programs';
+import type { Meal, Recipe } from '../data/recipes';
+import { programma, registraRicetteMie, registraSchedeMie } from '../lib/catalog';
 import { key } from '../lib/date';
 import { STACK_MATTINA_PRESTO } from '../data/supplements';
 import type { Tema } from '../lib/theme';
@@ -74,6 +75,10 @@ interface State {
   integratoriAttivi: string[];
   logIntegratori: Record<string, boolean>;
   pasti: MealEntry[];
+  /** ricette scritte dall'utente: stessa forma di quelle del ricettario */
+  ricetteMie: Recipe[];
+  /** schede scritte dall'utente: stanno nel programma finto 'mie-schede' */
+  schedeMie: WorkoutTemplate[];
   preferiti: string[];
   onboardingFatto: boolean;
   health: StatoSync;
@@ -126,6 +131,14 @@ interface State {
   addPasto: (m: Omit<MealEntry, 'id'>) => void;
   removePasto: (id: string) => void;
 
+  /** salva una ricetta nuova o ne aggiorna una esistente; ritorna l'id */
+  salvaRicetta: (r: Omit<Recipe, 'id'> & { id?: string }) => string;
+  eliminaRicetta: (id: string) => void;
+
+  /** salva una scheda nuova o ne aggiorna una esistente; ritorna l'id */
+  salvaScheda: (w: Omit<WorkoutTemplate, 'id'> & { id?: string }) => string;
+  eliminaScheda: (id: string) => void;
+
   togglePreferito: (exerciseId: string) => void;
   setHealth: (patch: Partial<StatoSync>) => void;
   setGiorniSalute: (giorni: GiornoSalute[]) => void;
@@ -149,6 +162,8 @@ export const useStore = create<State>()(
       integratoriAttivi: STACK_MATTINA_PRESTO,
       logIntegratori: {},
       pasti: [],
+      ricetteMie: [],
+      schedeMie: [],
       preferiti: [],
       onboardingFatto: false,
       health: {
@@ -224,7 +239,7 @@ export const useStore = create<State>()(
         }),
 
       applicaProgramma: (programId, dataInizio, settimane, soloFeriali = false) => {
-        const prog = PROGRAMS.find((p) => p.id === programId);
+        const prog = programma(programId);
         if (!prog) return;
         const piano = { ...get().piano };
         const start = new Date(dataInizio + 'T00:00:00');
@@ -405,6 +420,33 @@ export const useStore = create<State>()(
 
       removePasto: (id) => set((s) => ({ pasti: s.pasti.filter((p) => p.id !== id) })),
 
+      salvaRicetta: (r) => {
+        const id = r.id ?? `mia-${uid()}`;
+        const ricetta: Recipe = { ...r, id };
+        set((s) => ({
+          ricetteMie: s.ricetteMie.some((x) => x.id === id)
+            ? s.ricetteMie.map((x) => (x.id === id ? ricetta : x))
+            : [...s.ricetteMie, ricetta],
+        }));
+        return id;
+      },
+
+      eliminaRicetta: (id) =>
+        set((s) => ({ ricetteMie: s.ricetteMie.filter((r) => r.id !== id) })),
+
+      salvaScheda: (w) => {
+        const id = w.id ?? `mia-${uid()}`;
+        const scheda: WorkoutTemplate = { ...w, id };
+        set((s) => ({
+          schedeMie: s.schedeMie.some((x) => x.id === id)
+            ? s.schedeMie.map((x) => (x.id === id ? scheda : x))
+            : [...s.schedeMie, scheda],
+        }));
+        return id;
+      },
+
+      eliminaScheda: (id) => set((s) => ({ schedeMie: s.schedeMie.filter((w) => w.id !== id) })),
+
       togglePreferito: (exerciseId) =>
         set((s) => ({
           preferiti: s.preferiti.includes(exerciseId)
@@ -439,6 +481,17 @@ export const useStore = create<State>()(
     { name: 'gymbro-v1' },
   ),
 );
+
+/**
+ * Il catalogo e' un modulo puro e non conosce lo store: gli passiamo noi le
+ * ricette scritte dall'utente, cosi' `ricetta(id)` le trova come le altre.
+ */
+registraRicetteMie(useStore.getState().ricetteMie);
+registraSchedeMie(useStore.getState().schedeMie);
+useStore.subscribe((s) => {
+  registraRicetteMie(s.ricetteMie);
+  registraSchedeMie(s.schedeMie);
+});
 
 const RIPOSO_O_CARDIO = /ripos|cardio|liss|hiit|camminat|recuper/i;
 const SOLO_CARDIO = /cardio|liss|hiit|camminat/i;

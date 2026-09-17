@@ -1,17 +1,22 @@
 import { Link } from 'react-router-dom';
-import { ChevronRight, Clock, Dumbbell, HeartPulse, Layers } from 'lucide-react';
-import { PROGRAMS } from '../data/programs';
+import { ChevronRight, Clock, Dumbbell, HeartPulse, Layers, Plus } from 'lucide-react';
 import { useStore } from '../store/useStore';
-import { Card, SectionTitle, Tag, cx } from '../components/ui';
+import { ID_PROGRAMMA_MIO, tuttiIProgrammi } from '../lib/catalog';
+import { Button, Card, SectionTitle, Tag, cx } from '../components/ui';
 import { NAV_ALLENA, SottoNav } from '../components/SottoNav';
 import { GOAL_RULES } from '../lib/nutrition';
 
 export default function Allena() {
   const obiettivo = useStore((s) => s.profile?.obiettivo);
+  // le schede tue vengono ricalcolate quando cambiano: il selettore serve a questo
+  const schedeMie = useStore((s) => s.schedeMie);
 
-  const ordinati = [...PROGRAMS].sort(
-    (a, b) => (b.goal === obiettivo ? 1 : 0) - (a.goal === obiettivo ? 1 : 0),
-  );
+  const ordinati = [...tuttiIProgrammi()].sort((a, b) => {
+    // le tue schede restano in cima, poi i programmi del tuo obiettivo
+    if (a.id === ID_PROGRAMMA_MIO) return -1;
+    if (b.id === ID_PROGRAMMA_MIO) return 1;
+    return (b.goal === obiettivo ? 1 : 0) - (a.goal === obiettivo ? 1 : 0);
+  });
 
   return (
     <div>
@@ -21,7 +26,17 @@ export default function Allena() {
         Quattro blocchi pronti. Scegline uno e appoggialo sul calendario.
       </p>
 
-      <SectionTitle>Programmi</SectionTitle>
+      <SectionTitle
+        action={
+          <Link to="/allena/scheda/nuova">
+            <Button variant="ghost" className="!py-1.5 !text-xs">
+              <Plus size={13} className="mr-1 -mt-0.5 inline" /> Nuova scheda
+            </Button>
+          </Link>
+        }
+      >
+        Programmi{schedeMie.length > 0 && ' e schede tue'}
+      </SectionTitle>
       <div className="space-y-3">
         {ordinati.map((p) => (
           <Link key={p.id} to={`/allena/programma/${p.id}`} className="block">
@@ -30,7 +45,11 @@ export default function Allena() {
                 <div className="min-w-0">
                   <div className="flex flex-wrap items-center gap-1.5">
                     <h3 className="text-base font-bold leading-tight">{p.nome}</h3>
-                    {p.goal === obiettivo && <Tag tone="brand">Il tuo obiettivo</Tag>}
+                    {p.id === ID_PROGRAMMA_MIO ? (
+                      <Tag tone="brand">Tue</Tag>
+                    ) : (
+                      p.goal === obiettivo && <Tag tone="brand">Il tuo obiettivo</Tag>
+                    )}
                   </div>
                   <p className="mt-1 text-sm leading-snug text-soft">{p.descrizione}</p>
                 </div>
