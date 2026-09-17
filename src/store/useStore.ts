@@ -66,6 +66,15 @@ export interface SessioneCardio {
   note?: string;
 }
 
+/** Come ti sei sentito quel giorno, da 1 a 5. */
+export interface VoceDiario {
+  data: string;
+  energia: number;
+  fame: number;
+  dolori: number;
+  note?: string;
+}
+
 export interface ObiettiviAttivita {
   kcal: number;
   passi: number;
@@ -97,6 +106,8 @@ interface State {
   onboardingFatto: boolean;
   health: StatoSync;
   giorniSalute: Record<string, GiornoSalute>;
+  /** diario delle sensazioni, una voce per giorno */
+  diario: Record<string, VoceDiario>;
   obiettiviAttivita: ObiettiviAttivita;
   /** playlist Spotify: chiave = id della scheda, oppure 'default' */
   playlist: Record<string, Playlist>;
@@ -147,6 +158,8 @@ interface State {
 
   addPasto: (m: Omit<MealEntry, 'id'>) => void;
   removePasto: (id: string) => void;
+  /** ricopia i pasti di un giorno su un altro; ritorna quanti ne ha copiati */
+  copiaPasti: (daData: string, aData: string) => number;
 
   /** salva una ricetta nuova o ne aggiorna una esistente; ritorna l'id */
   salvaRicetta: (r: Omit<Recipe, 'id'> & { id?: string }) => string;
@@ -160,6 +173,7 @@ interface State {
   setHealth: (patch: Partial<StatoSync>) => void;
   setGiorniSalute: (giorni: GiornoSalute[]) => void;
   setObiettiviAttivita: (patch: Partial<ObiettiviAttivita>) => void;
+  setDiario: (data: string, patch: Partial<Omit<VoceDiario, 'data'>>) => void;
   setPlaylist: (chiave: string, p: Playlist | null) => void;
   setTema: (t: Tema) => void;
   setNotifiche: (patch: Partial<ImpostazioniNotifiche>) => void;
@@ -192,6 +206,7 @@ export const useStore = create<State>()(
         fcRiposo: null,
       },
       giorniSalute: {},
+      diario: {},
       obiettiviAttivita: { kcal: 500, passi: 9000, sonnoOre: 7.5, minutiEsercizio: 45 },
       playlist: {},
       tema: 'sistema',
@@ -225,6 +240,7 @@ export const useStore = create<State>()(
           preferiti: [],
           onboardingFatto: false,
           giorniSalute: {},
+          diario: {},
           health: {
             collegato: false,
             ultimaSync: null,
@@ -445,6 +461,14 @@ export const useStore = create<State>()(
 
       removePasto: (id) => set((s) => ({ pasti: s.pasti.filter((p) => p.id !== id) })),
 
+      copiaPasti: (daData, aData) => {
+        const sorgente = get().pasti.filter((p) => p.data === daData);
+        if (sorgente.length === 0) return 0;
+        const copie = sorgente.map((p) => ({ ...p, id: uid(), data: aData }));
+        set((s) => ({ pasti: [...s.pasti, ...copie] }));
+        return copie.length;
+      },
+
       salvaRicetta: (r) => {
         const id = r.id ?? `mia-${uid()}`;
         const ricetta: Recipe = { ...r, id };
@@ -490,6 +514,12 @@ export const useStore = create<State>()(
 
       setObiettiviAttivita: (patch) =>
         set((s) => ({ obiettiviAttivita: { ...s.obiettiviAttivita, ...patch } })),
+
+      setDiario: (data, patch) =>
+        set((s) => {
+          const prec = s.diario[data] ?? { data, energia: 3, fame: 3, dolori: 2 };
+          return { diario: { ...s.diario, [data]: { ...prec, ...patch, data } } };
+        }),
 
       setPlaylist: (chiave, p) =>
         set((s) => {

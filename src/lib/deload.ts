@@ -2,6 +2,7 @@ import type { SessionLog } from '../types';
 import type { Goal } from '../data/programs';
 import { esercizio } from './catalog';
 import { storicoEsercizio } from './progressione';
+import { commentoSegnali, type SegnaliSoggettivi } from './diario';
 import { giorniTra, oggi } from './date';
 
 /**
@@ -78,7 +79,19 @@ export function andamenti(sessioni: SessionLog[], giorni = GIORNI_FINESTRA): And
   return out.sort((a, b) => a.variazionePct - b.variazionePct);
 }
 
-export function valutaDeload(sessioni: SessionLog[], goal: Goal): SegnaleDeload {
+export function valutaDeload(
+  sessioni: SessionLog[],
+  goal: Goal,
+  /** energia, fame e dolori degli ultimi giorni: arrivano prima dei carichi */
+  segnali?: SegnaliSoggettivi,
+): SegnaleDeload {
+  const sensazioni = segnali ? commentoSegnali(segnali) : '';
+  const stanco =
+    !!segnali &&
+    segnali.giorni >= 4 &&
+    ((segnali.energiaMedia !== null && segnali.energiaMedia <= 2.4) ||
+      (segnali.doloriMedia !== null && segnali.doloriMedia >= 3.5));
+
   const lista = andamenti(sessioni);
   const settimaneAnalizzate = Math.round(GIORNI_FINESTRA / 7);
 
@@ -116,7 +129,8 @@ export function valutaDeload(sessioni: SessionLog[], goal: Goal): SegnaleDeload 
           : `Il massimale stimato è calato su ${base.inCalo.length} esercizi (${nomi(base.inCalo)}). `) +
         (goal === 'definizione'
           ? 'In definizione questo è il segnale per chiudere il blocco: perdere forza sui fondamentali significa che stai perdendo anche massa magra, non solo grasso. Passa a mantenimento per due settimane.'
-          : 'Un calo su più sedute non è una brutta giornata. Fai una settimana di scarico: stessi carichi, metà delle serie.'),
+          : 'Un calo su più sedute non è una brutta giornata. Fai una settimana di scarico: stessi carichi, metà delle serie.') +
+        (sensazioni ? ` ${sensazioni}` : ''),
     };
   }
 
@@ -132,7 +146,12 @@ export function valutaDeload(sessioni: SessionLog[], goal: Goal): SegnaleDeload 
           : '') +
         (goal === 'definizione'
           ? 'In deficit mantenere i carichi è già un buon risultato: il segnale di stop arriva quando iniziano a scendere davvero.'
-          : 'Prima di cambiare programma prova una settimana di scarico: spesso lo stallo è fatica accumulata, non mancanza di stimolo. Controlla anche sonno e calorie.'),
+          : 'Prima di cambiare programma prova una settimana di scarico: spesso lo stallo è fatica accumulata, non mancanza di stimolo. Controlla anche sonno e calorie.') +
+        (stanco
+          ? ` ${sensazioni} Con questi numeri lo scarico conviene farlo adesso, senza aspettare che scendano i carichi.`
+          : sensazioni
+            ? ` ${sensazioni}`
+            : ''),
     };
   }
 
@@ -141,6 +160,9 @@ export function valutaDeload(sessioni: SessionLog[], goal: Goal): SegnaleDeload 
     esito: 'ok',
     titolo: 'Progressione in corso',
     messaggio:
-      `${base.inCrescita.length === 1 ? 'Un fondamentale è salito' : `${base.inCrescita.length} fondamentali sono saliti`} nelle ultime ${settimaneAnalizzate} settimane (${nomi(base.inCrescita)}). Continua così: il deload si fa quando serve, non a calendario.`,
+      `${base.inCrescita.length === 1 ? 'Un fondamentale è salito' : `${base.inCrescita.length} fondamentali sono saliti`} nelle ultime ${settimaneAnalizzate} settimane (${nomi(base.inCrescita)}). Continua così: il deload si fa quando serve, non a calendario.` +
+      (stanco
+        ? ` ${sensazioni} I carichi salgono ancora, ma quei numeri sono bassi: se restano così per un'altra settimana, anticipa lo scarico.`
+        : ''),
   };
 }

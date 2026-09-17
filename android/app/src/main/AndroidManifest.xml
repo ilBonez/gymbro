@@ -41,6 +41,14 @@
     <uses-permission android:name="android.permission.INTERNET" />
 
     <!--
+      Fotocamera: serve solo alla lettura del codice a barre degli alimenti.
+      È facoltativa, l'app funziona anche digitando il codice a mano, quindi
+      `required="false"`: il Play Store non deve escludere i telefoni senza.
+    -->
+    <uses-permission android:name="android.permission.CAMERA" />
+    <uses-feature android:name="android.hardware.camera" android:required="false" />
+
+    <!--
       Health Connect.
 
       Il plugin @capgo/capacitor-health dichiara nel suo manifest tutti i 47 permessi

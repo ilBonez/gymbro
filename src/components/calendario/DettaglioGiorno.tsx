@@ -19,6 +19,7 @@ import { useGiornata } from '../../lib/useGiornata';
 import { ETICHETTA_STATO_GIORNO, statoGiorno } from '../../lib/giornata';
 import { kcalCardio, kcalScheda, nomeCardio } from '../../lib/burn';
 import { RegistraCardio } from '../RegistraCardio';
+import { DiarioSensazioni } from '../DiarioSensazioni';
 import { fmtDurata, labelLungo, oggi } from '../../lib/date';
 import { macroTargets } from '../../lib/nutrition';
 
@@ -100,6 +101,12 @@ export function DettaglioGiorno({
         {kcalPreviste > 0 && g.sessioni.length === 0 && (
           <p className="mt-3 border-t border-line pt-3 text-[11px] text-muted">
             Quello in programma vale circa <b className="text-brandink">{kcalPreviste} kcal</b>.
+          </p>
+        )}
+        {g.cardio.length > 0 && (g.salute?.kcalAttive ?? 0) > 0 && (
+          <p className="mt-3 border-t border-line pt-3 text-[11px] text-muted">
+            Le calorie qui sopra sono quelle misurate dal telefono: la seduta di cardio che hai
+            registrato è già dentro, non si somma.
           </p>
         )}
       </Card>
@@ -274,6 +281,8 @@ export function DettaglioGiorno({
           </div>
         </div>
       </Card>
+
+      <DiarioSensazioni data={data} />
 
       <RegistraCardio
         data={data}

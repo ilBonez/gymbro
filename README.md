@@ -46,12 +46,12 @@ eri, coi filtri che avevi.
 | Sezione | Cosa fa |
 | --- | --- |
 | **Oggi** | Resoconto della giornata con gli anelli (movimento, esercizio, passi, sonno), allenamento di oggi, macro, checklist integratori |
-| **Allena** | Programmi · Esercizi · Storico. 4 blocchi, 16 schede, 86 esercizi con esecuzione ed errori comuni |
+| **Allena** | Programmi · Esercizi · Storico. 4 blocchi, 16 schede, 86 esercizi con esecuzione ed errori comuni, più le schede che scrivi tu |
 | **Sessione** | Timer, log di serie/carico/ripetizioni, carico suggerito, record personali, conto alla rovescia per plank e simili, cambio esercizio al volo, playlist Spotify |
 | **Piano** | Calendario in quattro viste (giorno, settimana, mese, anno): stendi un programma su più settimane (anche solo lun-ven), con allenamenti, dieta, calorie e passi giorno per giorno |
-| **Dieta** | Oggi · Ricette · Sostituzioni · Spesa · Integratori |
+| **Dieta** | Oggi · Ricette · Sostituzioni · Spesa · Integratori. Ricette tue, pasti a mano, codice a barre (Open Food Facts), "ripeti ieri" e i pasti che registri più spesso |
 
-| **Progressi** | Peso e misure · Dieta (aderenza) · Allenamento (scarico, serie per muscolo, volume) |
+| **Progressi** | Peso e misure · Dieta (aderenza, fabbisogno reale dai tuoi dati) · Allenamento (scarico, serie per muscolo, volume) |
 
 Calorie e macro: metabolismo basale con Mifflin-St Jeor, TDEE per livello di attività, macro per
 obiettivo (le regole stanno in [`src/lib/nutrition.ts`](src/lib/nutrition.ts)). Il blocco low carb è

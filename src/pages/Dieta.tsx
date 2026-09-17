@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { BookmarkPlus, Check, Clock, PartyPopper, Pill, Plus, RefreshCw, ShoppingCart, Trash2 } from 'lucide-react';
+import { BookmarkPlus, Check, Clock, CopyPlus, PartyPopper, Pill, Plus, RefreshCw, ShoppingCart, Trash2 } from 'lucide-react';
 import { useStore } from '../store/useStore';
 import { useTargets } from '../lib/useTargets';
 import { MOMENTO_LABEL, gapMacro, generaGiornoDieta, listaSpesaDaPasti, fmtQta, totaliGiorno } from '../lib/diet';
@@ -31,6 +31,7 @@ function MenuOggi() {
   const removePasto = useStore((s) => s.removePasto);
   const aggiungiLista = useStore((s) => s.aggiungiListaSpesa);
   const ricetteMie = useStore((s) => s.ricetteMie);
+  const copiaPasti = useStore((s) => s.copiaPasti);
 
   const allenamentoOggi = !!piano[today]?.workoutId;
   const targets = useTargets(allenamentoOggi);
@@ -61,6 +62,17 @@ function MenuOggi() {
     }),
     { kcal: 0, proteine: 0, carbs: 0, grassi: 0 },
   );
+
+  const ieri = key(addDays(new Date(), -1));
+  const pastiIeri = pasti.filter((p) => p.data === ieri).length;
+
+  const ripetiIeri = () => {
+    // due diari identici nello stesso giorno sono un errore, non una scorciatoia
+    if (pastiOggi.length > 0 && !confirm('Oggi hai già dei pasti registrati. Aggiungo anche quelli di ieri?'))
+      return;
+    const n = copiaPasti(ieri, today);
+    setMsg(n > 0 ? `${n} pasti di ieri copiati su oggi.` : 'Ieri non avevi registrato niente.');
+  };
 
   const generaSpesa = () => {
     const settimana = Array.from({ length: 7 }, (_, i) => {
@@ -226,9 +238,16 @@ function MenuOggi() {
 
       <SectionTitle
         action={
-          <button onClick={() => setAggiungi(true)} className="text-xs text-brandink">
-            <Plus size={12} className="mr-0.5 -mt-0.5 inline" /> Aggiungi
-          </button>
+          <div className="flex items-center gap-3">
+            {pastiIeri > 0 && (
+              <button onClick={ripetiIeri} className="text-xs text-muted">
+                <CopyPlus size={12} className="mr-0.5 -mt-0.5 inline" /> Ripeti ieri
+              </button>
+            )}
+            <button onClick={() => setAggiungi(true)} className="text-xs text-brandink">
+              <Plus size={12} className="mr-0.5 -mt-0.5 inline" /> Aggiungi
+            </button>
+          </div>
         }
       >
         Diario di oggi

@@ -2,16 +2,19 @@ import { useMemo } from 'react';
 import { BatteryLow, TrendingDown, TrendingUp } from 'lucide-react';
 import { useStore } from '../store/useStore';
 import { valutaDeload } from '../lib/deload';
+import { segnaliRecenti } from '../lib/diario';
+import { oggi } from '../lib/date';
 import { Card, SectionTitle, cx } from './ui';
 
 /** Segnale di scarico, dedotto dall'andamento dei massimali invece che dal calendario. */
 export function Deload() {
   const sessioni = useStore((s) => s.sessioni);
   const obiettivo = useStore((s) => s.profile?.obiettivo);
+  const diario = useStore((s) => s.diario);
 
   const d = useMemo(
-    () => (obiettivo ? valutaDeload(sessioni, obiettivo) : null),
-    [sessioni, obiettivo],
+    () => (obiettivo ? valutaDeload(sessioni, obiettivo, segnaliRecenti(diario, oggi())) : null),
+    [sessioni, obiettivo, diario],
   );
 
   if (!d || d.esito === 'dati-insufficienti') return null;
