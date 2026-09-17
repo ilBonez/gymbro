@@ -1,13 +1,13 @@
 import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { BookmarkPlus, Check, Clock, CopyPlus, PartyPopper, Pill, Plus, RefreshCw, ShoppingCart, Trash2 } from 'lucide-react';
+import { BookmarkPlus, Check, Clock, CopyPlus, PartyPopper, Pill, Plus, RefreshCw, ScanBarcode, ShoppingCart, Trash2 } from 'lucide-react';
 import { useStore } from '../store/useStore';
 import { useTargets } from '../lib/useTargets';
 import { MOMENTO_LABEL, gapMacro, generaGiornoDieta, listaSpesaDaPasti, fmtQta, totaliGiorno } from '../lib/diet';
 import { ETICHETTA_STATO, equivalenti } from '../lib/equivalenze';
 import { MacroBlock } from '../components/MacroRow';
 import { Button, Card, SectionTitle, Tag, cx } from '../components/ui';
-import { AggiungiPasto } from '../components/AggiungiPasto';
+import { AggiungiPasto, type ModoPasto } from '../components/AggiungiPasto';
 import { NAV_DIETA, SottoNav } from '../components/SottoNav';
 import { key, oggi } from '../lib/date';
 import { GOAL_RULES } from '../lib/nutrition';
@@ -36,7 +36,7 @@ function MenuOggi() {
   const allenamentoOggi = !!piano[today]?.workoutId;
   const targets = useTargets(allenamentoOggi);
   const [msg, setMsg] = useState('');
-  const [aggiungi, setAggiungi] = useState(false);
+  const [aggiungi, setAggiungi] = useState<ModoPasto | null>(null);
 
   const menu = useMemo(
     () =>
@@ -244,7 +244,14 @@ function MenuOggi() {
                 <CopyPlus size={12} className="mr-0.5 -mt-0.5 inline" /> Ripeti ieri
               </button>
             )}
-            <button onClick={() => setAggiungi(true)} className="text-xs text-brandink">
+            <button
+              onClick={() => setAggiungi('barcode')}
+              aria-label="Leggi il codice a barre"
+              className="text-xs text-brandink"
+            >
+              <ScanBarcode size={14} />
+            </button>
+            <button onClick={() => setAggiungi('manuale')} className="text-xs text-brandink">
               <Plus size={12} className="mr-0.5 -mt-0.5 inline" /> Aggiungi
             </button>
           </div>
@@ -256,8 +263,12 @@ function MenuOggi() {
         <Card>
           <p className="text-xs leading-relaxed text-muted">
             Niente registrato. Spunta i pasti del menu qui sopra, oppure{' '}
-            <button onClick={() => setAggiungi(true)} className="text-brandink underline">
+            <button onClick={() => setAggiungi('manuale')} className="text-brandink underline">
               aggiungine uno a mano
+            </button>{' '}
+            o{' '}
+            <button onClick={() => setAggiungi('barcode')} className="text-brandink underline">
+              leggi un codice a barre
             </button>{' '}
             se hai mangiato altro.
           </p>
@@ -317,7 +328,12 @@ function MenuOggi() {
         </p>
       </div>
 
-      <AggiungiPasto open={aggiungi} onClose={() => setAggiungi(false)} data={today} />
+      <AggiungiPasto
+        open={aggiungi !== null}
+        modoIniziale={aggiungi ?? 'manuale'}
+        onClose={() => setAggiungi(null)}
+        data={today}
+      />
     </div>
   );
 }

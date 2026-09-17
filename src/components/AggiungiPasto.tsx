@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { History, PartyPopper, PencilLine, ScanBarcode } from 'lucide-react';
 import { useStore } from '../store/useStore';
 import { SGARRI } from '../data/sgarri';
@@ -10,24 +10,28 @@ import { pastiFrequenti } from '../lib/pastiFrequenti';
 import { ScannerBarcode } from './ScannerBarcode';
 import { cercaProdotto, porzione, type ProdottoOFF } from '../lib/openfoodfacts';
 
+export type ModoPasto = 'manuale' | 'frequenti' | 'barcode' | 'sgarro';
+
 /**
- * Registra un pasto che non sta nel ricettario: o a mano coi macro,
- * oppure scegliendo uno sgarro dalla lista dei classici.
+ * Registra un pasto che non sta nel ricettario: a mano coi macro, riprendendo
+ * uno dei soliti, leggendo il codice a barre o scegliendo uno sgarro.
  */
 export function AggiungiPasto({
   open,
   onClose,
   data,
+  modoIniziale = 'manuale',
 }: {
   open: boolean;
   onClose: () => void;
   data: string;
+  modoIniziale?: ModoPasto;
 }) {
   const addPasto = useStore((s) => s.addPasto);
   const pasti = useStore((s) => s.pasti);
   const frequenti = useMemo(() => pastiFrequenti(pasti, data), [pasti, data]);
 
-  const [modo, setModo] = useState<'manuale' | 'frequenti' | 'barcode' | 'sgarro'>('manuale');
+  const [modo, setModo] = useState<ModoPasto>(modoIniziale);
   const [prodotto, setProdotto] = useState<ProdottoOFF | null>(null);
   const [grammi, setGrammi] = useState(100);
   const [statoRicerca, setStatoRicerca] = useState('');
@@ -42,6 +46,10 @@ export function AggiungiPasto({
   const kcalDaiMacro = kcalDaMacro(n(prot), n(carb), n(gras));
   const kcalFinali = n(kcal) > 0 ? n(kcal) : kcalDaiMacro;
   const scostamento = n(kcal) > 0 && kcalDaiMacro > 0 ? Math.abs(n(kcal) - kcalDaiMacro) : 0;
+
+  useEffect(() => {
+    if (open) setModo(modoIniziale);
+  }, [open, modoIniziale]);
 
   const reset = () => {
     setNome('');
@@ -71,7 +79,7 @@ export function AggiungiPasto({
   return (
     <Sheet open={open} onClose={onClose} title="Aggiungi pasto">
       <div className="space-y-4">
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           <Chip active={modo === 'manuale'} onClick={() => setModo('manuale')}>
             <PencilLine size={11} className="mr-1 -mt-0.5 inline" /> A mano
           </Chip>
