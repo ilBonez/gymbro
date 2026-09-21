@@ -61,6 +61,8 @@
       - READ_STEPS                  passi giornalieri
       - READ_ACTIVE_CALORIES_BURNED calorie attive
       - READ_HEART_RATE             frequenza cardiaca, usata per stimare quella a riposo
+      - READ_SLEEP                  sonno registrato dall'orologio o dall'app della sveglia
+      - READ_EXERCISE               sessioni di allenamento: passeggiate, corse, palestra
       - READ_HEALTH_DATA_HISTORY    oltre i 30 giorni di storico (Android 14 ext. 13+)
     -->
     <uses-permission android:name="android.permission.health.READ_HEALTH_DATA_HISTORY" />
@@ -72,7 +74,6 @@
     <uses-permission android:name="android.permission.health.READ_BODY_FAT" tools:node="remove" />
     <uses-permission android:name="android.permission.health.READ_BODY_TEMPERATURE" tools:node="remove" />
     <uses-permission android:name="android.permission.health.READ_DISTANCE" tools:node="remove" />
-    <uses-permission android:name="android.permission.health.READ_EXERCISE" tools:node="remove" />
     <uses-permission android:name="android.permission.health.READ_FLOORS_CLIMBED" tools:node="remove" />
     <uses-permission android:name="android.permission.health.READ_HEART_RATE_VARIABILITY" tools:node="remove" />
     <uses-permission android:name="android.permission.health.READ_HEIGHT" tools:node="remove" />
@@ -82,7 +83,6 @@
     <uses-permission android:name="android.permission.health.READ_OXYGEN_SATURATION" tools:node="remove" />
     <uses-permission android:name="android.permission.health.READ_RESPIRATORY_RATE" tools:node="remove" />
     <uses-permission android:name="android.permission.health.READ_RESTING_HEART_RATE" tools:node="remove" />
-    <uses-permission android:name="android.permission.health.READ_SLEEP" tools:node="remove" />
     <uses-permission android:name="android.permission.health.READ_TOTAL_CALORIES_BURNED" tools:node="remove" />
     <uses-permission android:name="android.permission.health.READ_VO" tools:node="remove" />
     <uses-permission android:name="android.permission.health.WRITE_ACTIVE_CALORIES_BURNED" tools:node="remove" />

@@ -19,6 +19,18 @@ import { Button, Card, SectionTitle, Tag, cx } from './ui';
 import { useTargets } from '../lib/useTargets';
 import { oggi } from '../lib/date';
 
+/** I nomi dei permessi come li capisce chi legge, non come li chiama l'API. */
+const NOMI_TIPI: Record<string, string> = {
+  weight: 'peso',
+  steps: 'passi',
+  calories: 'calorie',
+  heartRate: 'frequenza cardiaca',
+  sleep: 'sonno',
+  workouts: 'sessioni di allenamento',
+};
+
+const nomeTipo = (t: string) => NOMI_TIPI[t] ?? t;
+
 export function HealthCard() {
   const health = useStore((s) => s.health);
   const giorniSalute = useStore((s) => s.giorniSalute);
@@ -234,6 +246,18 @@ export function HealthCard() {
                 : ': ti muovi meno di quanto hai indicato.'}{' '}
               Se il peso non si muove come previsto, correggi il livello nel profilo.
             </p>
+          )}
+
+          {stato.negati.length > 0 && (
+            <div className="mt-3 rounded-xl border border-carb/25 bg-carb/8 p-3">
+              <p className="text-[11px] leading-relaxed text-carb/95">
+                Mancano i permessi su <b>{stato.negati.map(nomeTipo).join(', ')}</b>: quei dati
+                restano a zero finché non li concedi.
+              </p>
+              <Button variant="ghost" full className="mt-2.5 !text-xs" onClick={collega}>
+                Concedi i permessi mancanti
+              </Button>
+            </div>
           )}
 
           {stato.storicoEsteso === false && (

@@ -9,8 +9,21 @@ import type { GiornoSalute } from '../store/useStore';
  * silenzioso e l'app continua a funzionare con i dati inseriti a mano.
  */
 
-/** Dati che GymBro legge. Nient'altro viene richiesto. */
-export const TIPI_LETTI: HealthDataType[] = ['weight', 'steps', 'calories', 'heartRate', 'sleep'];
+/**
+ * Dati che GymBro legge. Nient'altro viene richiesto.
+ *
+ * 'workouts' non è un dato che leggiamo a campioni: è il permesso sulle
+ * sessioni di esercizio (READ_EXERCISE). Senza, `queryWorkouts` non vede
+ * niente e una passeggiata registrata dall'orologio non arriva mai nell'app.
+ */
+export const TIPI_LETTI: HealthDataType[] = [
+  'weight',
+  'steps',
+  'calories',
+  'heartRate',
+  'sleep',
+  'workouts',
+];
 
 export interface StatoHealth {
   disponibile: boolean;
@@ -236,6 +249,20 @@ async function sonnoPerGiorno(giorni: number): Promise<Map<string, number>> {
       const da = new Date(s.startDate).getTime();
       const a = new Date(s.endDate).getTime();
       if (!(a > da)) continue;
+
+      // quando il tracciatore espone le fasi, il tempo vero è la somma di
+      // quelle: la sessione intera comprende anche i risvegli
+      if (s.stages && s.stages.length > 0) {
+        for (const f of s.stages) {
+          const fda = new Date(f.startDate).getTime();
+          const fa = new Date(f.endDate).getTime();
+          if (!(fa > fda)) continue;
+          if (f.stage === 'awake') sveglio.push({ da: fda, a: fa });
+          else dormito.push({ da: fda, a: fa });
+        }
+        continue;
+      }
+
       if (s.sleepState === 'awake') sveglio.push({ da, a });
       else dormito.push({ da, a });
     }
