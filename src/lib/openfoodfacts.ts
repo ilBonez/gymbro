@@ -10,6 +10,8 @@
  * salvarli.
  */
 
+import type { Food } from '../data/foods';
+
 const BASE = 'https://world.openfoodfacts.org/api/v2/product';
 const CAMPI = 'code,product_name,product_name_it,brands,nutriments,serving_quantity,quantity';
 
@@ -97,6 +99,28 @@ export async function cercaProdotto(codice: string, segnale?: AbortSignal): Prom
       messaggio: 'Niente connessione a Open Food Facts. Puoi inserire i valori a mano.',
     };
   }
+}
+
+/**
+ * Il prodotto come alimento del catalogo personale.
+ *
+ * Il codice a barre finisce in `note`: serve a riconoscere lo stesso prodotto
+ * a una scansione successiva invece di duplicarlo.
+ */
+export function alimentoDaProdotto(p: ProdottoOFF): Omit<Food, 'id'> {
+  return {
+    nome: p.nome,
+    marca: p.marca,
+    categoria: 'dispensa',
+    kcal: p.per100.kcal,
+    proteine: p.per100.proteine,
+    carbs: p.per100.carbs,
+    grassi: p.per100.grassi,
+    porzioneTipica: p.porzioneG && p.porzioneG > 0 ? Math.round(p.porzioneG) : 100,
+    unita: 'g',
+    eurospin: false,
+    note: `barcode:${p.barcode}`,
+  };
 }
 
 /** I macro di una quantità in grammi, dai valori per 100 g. */

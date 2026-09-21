@@ -29,8 +29,33 @@ export interface DatiHealth {
   fcRiposo: number | null;
 }
 
-const giorniFa = (n: number) => new Date(Date.now() - n * 86400000).toISOString();
-const giorno = (iso: string) => iso.slice(0, 10);
+/**
+ * Le finestre partono dalla mezzanotte locale, non da "adesso meno n giorni".
+ *
+ * Health Connect raggruppa per giorno a partire dall'istante iniziale: con una
+ * finestra che cominciava alle 10:47 i secchielli andavano dalle 10:47 alle
+ * 10:47, e la roba di oggi finiva in quello etichettato ieri.
+ */
+const giorniFa = (n: number) => {
+  const d = new Date();
+  d.setHours(0, 0, 0, 0);
+  d.setDate(d.getDate() - n);
+  return d.toISOString();
+};
+
+/**
+ * Il giorno *locale* di un istante.
+ *
+ * Prima si tagliavano i primi dieci caratteri dell'ISO, che però è in UTC:
+ * in Italia la mezzanotte locale è le 22:00 del giorno prima, quindi ogni
+ * giornata veniva registrata sotto la data sbagliata.
+ */
+const giorno = (iso: string): string => {
+  const d = new Date(iso);
+  const mm = String(d.getMonth() + 1).padStart(2, '0');
+  const dd = String(d.getDate()).padStart(2, '0');
+  return `${d.getFullYear()}-${mm}-${dd}`;
+};
 
 /**
  * Calorie bruciate camminando, quando il telefono conta i passi ma non le calorie.
@@ -42,9 +67,17 @@ export function kcalDaPassi(passi: number, pesoKg: number): number {
   return Math.round(passi * pesoKg * 0.00045);
 }
 
-/** Calorie di movimento del giorno: le misurate se ci sono, altrimenti la stima. */
+/**
+ * Calorie di movimento del giorno.
+ *
+ * Le misurate vincono su tutto: contengono già passi e allenamenti. Se mancano,
+ * si prende la più grande fra la stima dai passi e le calorie delle sessioni
+ * registrate da altre app — una passeggiata segnata dall'orologio è anche
+ * passi, quindi sommarle le conterebbe due volte.
+ */
 export function kcalMovimento(g: GiornoSalute): number {
-  return g.kcalAttive > 0 ? g.kcalAttive : g.kcalStimateDaPassi;
+  if (g.kcalAttive > 0) return g.kcalAttive;
+  return Math.max(g.kcalStimateDaPassi, g.kcalAllenamento);
 }
 
 export async function statoHealth(): Promise<StatoHealth> {
@@ -144,7 +177,49 @@ async function sommaPerGiorno(dataType: HealthDataType, giorni: number) {
   }
 }
 
-/** Minuti di sonno per notte, attribuiti al giorno del risveglio. */
+interface Intervallo {
+  da: number;
+  a: number;
+}
+
+/** Unione di intervalli sovrapposti: la stessa notte contata una volta sola. */
+function unisci(intervalli: Intervallo[]): Intervallo[] {
+  const ordinati = [...intervalli].sort((x, y) => x.da - y.da);
+  const out: Intervallo[] = [];
+  for (const i of ordinati) {
+    const ultimo = out[out.length - 1];
+    if (ultimo && i.da <= ultimo.a) ultimo.a = Math.max(ultimo.a, i.a);
+    else out.push({ ...i });
+  }
+  return out;
+}
+
+/** Toglie da `base` le parti coperte da `buchi` (le fasi di veglia). */
+function sottrai(base: Intervallo[], buchi: Intervallo[]): Intervallo[] {
+  let out = base;
+  for (const b of unisci(buchi)) {
+    const nuovo: Intervallo[] = [];
+    for (const i of out) {
+      if (b.a <= i.da || b.da >= i.a) {
+        nuovo.push(i);
+        continue;
+      }
+      if (b.da > i.da) nuovo.push({ da: i.da, a: b.da });
+      if (b.a < i.a) nuovo.push({ da: b.a, a: i.a });
+    }
+    out = nuovo;
+  }
+  return out;
+}
+
+/**
+ * Minuti di sonno per notte, attribuiti al giorno del risveglio.
+ *
+ * Chi registra il sonno con l'orologio spesso scrive sia la sessione intera sia
+ * le singole fasi: sommandole verrebbero il doppio delle ore. Qui si uniscono
+ * gli intervalli e poi si tolgono le fasi di veglia, così la sovrapposizione
+ * non conta due volte.
+ */
 async function sonnoPerGiorno(giorni: number): Promise<Map<string, number>> {
   const out = new Map<string, number>();
   try {
@@ -154,12 +229,22 @@ async function sonnoPerGiorno(giorni: number): Promise<Map<string, number>> {
       endDate: new Date().toISOString(),
       ascending: true,
     });
+
+    const dormito: Intervallo[] = [];
+    const sveglio: Intervallo[] = [];
     for (const s of samples) {
-      // le fasi "sveglio" dentro una sessione non contano come sonno
-      if (s.sleepState === 'awake') continue;
-      const minuti = (new Date(s.endDate).getTime() - new Date(s.startDate).getTime()) / 60000;
+      const da = new Date(s.startDate).getTime();
+      const a = new Date(s.endDate).getTime();
+      if (!(a > da)) continue;
+      if (s.sleepState === 'awake') sveglio.push({ da, a });
+      else dormito.push({ da, a });
+    }
+
+    for (const i of sottrai(unisci(dormito), sveglio)) {
+      const minuti = (i.a - i.da) / 60000;
+      // una "notte" più lunga di sedici ore è un dato sbagliato, non un sonnellino
       if (minuti <= 0 || minuti > 16 * 60) continue;
-      const k = giorno(s.endDate);
+      const k = giorno(new Date(i.a).toISOString());
       out.set(k, (out.get(k) ?? 0) + minuti);
     }
   } catch {

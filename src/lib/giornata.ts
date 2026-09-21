@@ -135,7 +135,8 @@ function costruisci(
    * più grande delle due; la palestra invece i passi non la contano e si somma.
    */
   const misurate = salute ? kcalMovimento(salute) : 0;
-  const stimate = Math.max(salute?.kcalStimateDaPassi ?? 0, kcalCardio) + kcalPalestra;
+  // kcalMovimento ha già scelto fra passi e sessioni lette dal telefono
+  const stimate = Math.max(misurate, kcalCardio) + kcalPalestra;
 
   return {
     data,

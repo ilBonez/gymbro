@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { History, PartyPopper, PencilLine, ScanBarcode } from 'lucide-react';
+import { Apple, History, PartyPopper, PencilLine, ScanBarcode } from 'lucide-react';
 import { useStore } from '../store/useStore';
 import { SGARRI } from '../data/sgarri';
 import type { Meal } from '../data/recipes';
@@ -8,9 +8,10 @@ import { Button, Chip, Field, Sheet, cx, inputCls } from './ui';
 import { kcalDaMacro } from '../lib/nutrition';
 import { pastiFrequenti } from '../lib/pastiFrequenti';
 import { ScannerBarcode } from './ScannerBarcode';
-import { cercaProdotto, porzione, type ProdottoOFF } from '../lib/openfoodfacts';
+import { alimentoDaProdotto, cercaProdotto, porzione, type ProdottoOFF } from '../lib/openfoodfacts';
+import { SceltaAlimento, macroAlimento } from './SceltaAlimento';
 
-export type ModoPasto = 'manuale' | 'frequenti' | 'barcode' | 'sgarro';
+export type ModoPasto = 'manuale' | 'alimento' | 'frequenti' | 'barcode' | 'sgarro';
 
 /**
  * Registra un pasto che non sta nel ricettario: a mano coi macro, riprendendo
@@ -32,6 +33,7 @@ export function AggiungiPasto({
   const frequenti = useMemo(() => pastiFrequenti(pasti, data), [pasti, data]);
 
   const [modo, setModo] = useState<ModoPasto>(modoIniziale);
+  const salvaAlimento = useStore((s) => s.salvaAlimento);
   const [prodotto, setProdotto] = useState<ProdottoOFF | null>(null);
   const [grammi, setGrammi] = useState(100);
   const [statoRicerca, setStatoRicerca] = useState('');
@@ -83,6 +85,9 @@ export function AggiungiPasto({
           <Chip active={modo === 'manuale'} onClick={() => setModo('manuale')}>
             <PencilLine size={11} className="mr-1 -mt-0.5 inline" /> A mano
           </Chip>
+          <Chip active={modo === 'alimento'} onClick={() => setModo('alimento')}>
+            <Apple size={11} className="mr-1 -mt-0.5 inline" /> Alimento
+          </Chip>
           {frequenti.length > 0 && (
             <Chip active={modo === 'frequenti'} onClick={() => setModo('frequenti')}>
               <History size={11} className="mr-1 -mt-0.5 inline" /> Soliti
@@ -106,7 +111,25 @@ export function AggiungiPasto({
           </div>
         </Field>
 
-        {modo === 'barcode' ? (
+        {modo === 'alimento' ? (
+          <SceltaAlimento
+            onAggiungi={(f, grammi) => {
+              const m = macroAlimento(f, grammi);
+              addPasto({
+                data,
+                momento,
+                nome: `${f.nome} ${grammi} ${f.unita === 'ml' ? 'ml' : 'g'}`,
+                porzioni: 1,
+                kcal: m.kcal,
+                proteine: m.proteine,
+                carbs: m.carbs,
+                grassi: m.grassi,
+                tipo: 'normale',
+              });
+              onClose();
+            }}
+          />
+        ) : modo === 'barcode' ? (
           <>
             {!prodotto ? (
               <>
@@ -162,6 +185,8 @@ export function AggiungiPasto({
                   disabled={porzione(prodotto, grammi).kcal <= 0}
                   onClick={() => {
                     const m = porzione(prodotto, grammi);
+                    // salvarlo fra i tuoi alimenti lo rende cercabile e usabile nelle ricette
+                    salvaAlimento(alimentoDaProdotto(prodotto));
                     addPasto({
                       data,
                       momento,
@@ -179,6 +204,11 @@ export function AggiungiPasto({
                 >
                   Aggiungi · {porzione(prodotto, grammi).kcal} kcal
                 </Button>
+
+                <p className="text-[11px] leading-relaxed text-muted">
+                  Salvandolo finisce fra i tuoi alimenti: la prossima volta lo trovi cercandolo per
+                  nome, anche come ingrediente di una ricetta.
+                </p>
 
                 <button
                   onClick={() => {

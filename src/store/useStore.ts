@@ -11,7 +11,13 @@ import type {
 } from '../types';
 import type { ModalitaCardio, WorkoutTemplate } from '../data/programs';
 import type { Meal, Recipe } from '../data/recipes';
-import { programma, registraRicetteMie, registraSchedeMie } from '../lib/catalog';
+import type { Food } from '../data/foods';
+import {
+  programma,
+  registraAlimentiMiei,
+  registraRicetteMie,
+  registraSchedeMie,
+} from '../lib/catalog';
 import { key } from '../lib/date';
 import { STACK_MATTINA_PRESTO } from '../data/supplements';
 import type { Tema } from '../lib/theme';
@@ -102,6 +108,8 @@ interface State {
   ricetteMie: Recipe[];
   /** schede scritte dall'utente: stanno nel programma finto 'mie-schede' */
   schedeMie: WorkoutTemplate[];
+  /** alimenti tuoi: quelli letti col codice a barre o scritti a mano */
+  alimentiMiei: Food[];
   preferiti: string[];
   onboardingFatto: boolean;
   health: StatoSync;
@@ -169,6 +177,10 @@ interface State {
   salvaScheda: (w: Omit<WorkoutTemplate, 'id'> & { id?: string }) => string;
   eliminaScheda: (id: string) => void;
 
+  /** salva un alimento tuo; se esiste gia' lo stesso codice a barre lo aggiorna */
+  salvaAlimento: (f: Omit<Food, 'id'> & { id?: string }) => string;
+  eliminaAlimento: (id: string) => void;
+
   togglePreferito: (exerciseId: string) => void;
   setHealth: (patch: Partial<StatoSync>) => void;
   setGiorniSalute: (giorni: GiornoSalute[]) => void;
@@ -196,6 +208,7 @@ export const useStore = create<State>()(
       pasti: [],
       ricetteMie: [],
       schedeMie: [],
+      alimentiMiei: [],
       preferiti: [],
       onboardingFatto: false,
       health: {
@@ -496,6 +509,24 @@ export const useStore = create<State>()(
 
       eliminaScheda: (id) => set((s) => ({ schedeMie: s.schedeMie.filter((w) => w.id !== id) })),
 
+      salvaAlimento: (f) => {
+        // due scansioni dello stesso prodotto sono lo stesso alimento
+        const perCodice = f.note?.startsWith('barcode:')
+          ? get().alimentiMiei.find((x) => x.note === f.note)
+          : undefined;
+        const id = f.id ?? perCodice?.id ?? `mio-${uid()}`;
+        const alimento: Food = { ...f, id };
+        set((s) => ({
+          alimentiMiei: s.alimentiMiei.some((x) => x.id === id)
+            ? s.alimentiMiei.map((x) => (x.id === id ? alimento : x))
+            : [...s.alimentiMiei, alimento],
+        }));
+        return id;
+      },
+
+      eliminaAlimento: (id) =>
+        set((s) => ({ alimentiMiei: s.alimentiMiei.filter((f) => f.id !== id) })),
+
       togglePreferito: (exerciseId) =>
         set((s) => ({
           preferiti: s.preferiti.includes(exerciseId)
@@ -543,9 +574,11 @@ export const useStore = create<State>()(
  */
 registraRicetteMie(useStore.getState().ricetteMie);
 registraSchedeMie(useStore.getState().schedeMie);
+registraAlimentiMiei(useStore.getState().alimentiMiei);
 useStore.subscribe((s) => {
   registraRicetteMie(s.ricetteMie);
   registraSchedeMie(s.schedeMie);
+  registraAlimentiMiei(s.alimentiMiei);
 });
 
 const RIPOSO_O_CARDIO = /ripos|cardio|liss|hiit|camminat|recuper/i;

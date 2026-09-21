@@ -20,8 +20,30 @@ export function nomeEsercizio(id: string): string {
   return exMap.get(id)?.nome ?? id;
 }
 
+/**
+ * Alimenti tuoi: quelli letti col codice a barre o scritti a mano.
+ *
+ * Stanno accanto ai 200 del catalogo e si cercano insieme, così una
+ * Coca-Cola o uno yogurt bianco si registrano come pasto o si mettono in una
+ * ricetta senza doverne inventare una apposta.
+ */
+let alimentiMiei = new Map<string, Food>();
+
+export function registraAlimentiMiei(lista: Food[]): void {
+  alimentiMiei = new Map(lista.map((f) => [f.id, f]));
+}
+
+export function alimentoMio(id: string): boolean {
+  return id.startsWith('mio-');
+}
+
 export function alimento(id: string): Food | undefined {
-  return foodMap.get(id);
+  return foodMap.get(id) ?? alimentiMiei.get(id);
+}
+
+/** Catalogo più i tuoi, coi tuoi in cima: sono pochi e li cerchi più spesso. */
+export function tuttiGliAlimenti(): Food[] {
+  return alimentiMiei.size > 0 ? [...alimentiMiei.values(), ...FOODS] : FOODS;
 }
 
 /**

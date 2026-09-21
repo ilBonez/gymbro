@@ -1,13 +1,14 @@
 import { useMemo, useState } from 'react';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
-import { Plus, Search, Trash2, X } from 'lucide-react';
-import { FOODS } from '../data/foods';
+import { Plus, ScanBarcode, Search, Trash2, X } from 'lucide-react';
 import type { Meal, Recipe, RecipeIngredient } from '../data/recipes';
 import { useStore } from '../store/useStore';
-import { ricetta, ricettaMia } from '../lib/catalog';
+import { alimentoMio, ricetta, ricettaMia, tuttiGliAlimenti } from '../lib/catalog';
 import { MOMENTI, MOMENTO_LABEL } from '../lib/diet';
 import { contaIngredienti, fasiSuggerite, perPorzione, problemi } from '../lib/ricetteMie';
 import { Button, Card, Chip, Field, SectionTitle, Sheet, Warn, cx, inputCls } from '../components/ui';
+import { ScannerBarcode } from '../components/ScannerBarcode';
+import { alimentoDaProdotto, cercaProdotto } from '../lib/openfoodfacts';
 
 const FASI: Recipe['fasi'] = ['definizione', 'forza', 'massa', 'mantenimento'];
 const UNITA: RecipeIngredient['unita'][] = ['g', 'ml', 'pz', 'cucchiaio', 'q.b.'];
@@ -47,7 +48,7 @@ export default function RicettaNuova() {
   const [macroMano, setMacroMano] = useState(
     esistente?.macro ?? daPasto?.macro ?? { kcal: 0, proteine: 0, carbs: 0, grassi: 0 },
   );
-  const [cerca, setCerca] = useState<'' | 'catalogo' | 'libero'>('');
+  const [cerca, setCerca] = useState<'' | 'catalogo' | 'libero' | 'barcode'>('');
   const [errore, setErrore] = useState<string[]>([]);
 
   const conto = useMemo(() => contaIngredienti(ingredienti), [ingredienti]);
@@ -137,7 +138,11 @@ export default function RicettaNuova() {
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-sm font-medium">{i.nome}</p>
                   <p className="text-[11px] text-muted">
-                    {i.foodId ? 'dal catalogo' : 'scritto a mano'}
+                    {!i.foodId
+                      ? 'scritto a mano'
+                      : alimentoMio(i.foodId)
+                        ? 'alimento tuo'
+                        : 'dal catalogo'}
                     {i.unita !== 'g' && i.unita !== 'ml' && ' · non entra nei macro'}
                   </p>
                 </div>
@@ -175,12 +180,15 @@ export default function RicettaNuova() {
           </ul>
         )}
 
-        <div className="mt-2 grid grid-cols-2 gap-2">
-          <Button variant="ghost" onClick={() => setCerca('catalogo')}>
-            <Search size={14} className="mr-1.5 -mt-0.5 inline" /> Dal catalogo
+        <div className="mt-2 grid grid-cols-3 gap-2">
+          <Button variant="ghost" className="!px-2 !text-xs" onClick={() => setCerca('catalogo')}>
+            <Search size={14} className="mr-1 -mt-0.5 inline" /> Cerca
           </Button>
-          <Button variant="ghost" onClick={() => setCerca('libero')}>
-            <Plus size={14} className="mr-1.5 -mt-0.5 inline" /> A mano
+          <Button variant="ghost" className="!px-2 !text-xs" onClick={() => setCerca('barcode')}>
+            <ScanBarcode size={14} className="mr-1 -mt-0.5 inline" /> Barcode
+          </Button>
+          <Button variant="ghost" className="!px-2 !text-xs" onClick={() => setCerca('libero')}>
+            <Plus size={14} className="mr-1 -mt-0.5 inline" /> A mano
           </Button>
         </div>
       </Card>
@@ -331,34 +339,79 @@ export default function RicettaNuova() {
   );
 }
 
-/** Foglio per aggiungere un ingrediente, dal catalogo o scritto a mano. */
+/** Foglio per aggiungere un ingrediente: cercato, letto col codice o scritto a mano. */
 function SceltaIngrediente({
   modo,
   onClose,
   onAggiungi,
 }: {
-  modo: '' | 'catalogo' | 'libero';
+  modo: '' | 'catalogo' | 'libero' | 'barcode';
   onClose: () => void;
   onAggiungi: (i: RecipeIngredient) => void;
 }) {
+  const salvaAlimento = useStore((s) => s.salvaAlimento);
+  const alimentiMiei = useStore((s) => s.alimentiMiei);
   const [q, setQ] = useState('');
   const [nome, setNome] = useState('');
   const [qta, setQta] = useState(100);
   const [unita, setUnita] = useState<RecipeIngredient['unita']>('g');
+  const [statoRicerca, setStatoRicerca] = useState('');
 
   const risultati = useMemo(() => {
     const t = q.trim().toLowerCase();
-    if (!t) return FOODS.slice(0, 15);
-    return FOODS.filter((f) => f.nome.toLowerCase().includes(t)).slice(0, 30);
-  }, [q]);
+    // gli alimenti tuoi stanno in cima: li ha aggiunti apposta
+    const tutti = tuttiGliAlimenti();
+    void alimentiMiei;
+    if (!t) return tutti.slice(0, 15);
+    return tutti
+      .filter((f) => f.nome.toLowerCase().includes(t) || f.marca?.toLowerCase().includes(t))
+      .slice(0, 30);
+  }, [q, alimentiMiei]);
 
   return (
     <Sheet
       open={modo !== ''}
       onClose={onClose}
-      title={modo === 'catalogo' ? 'Dal catalogo' : 'Ingrediente a mano'}
+      title={
+        modo === 'catalogo'
+          ? 'Cerca un alimento'
+          : modo === 'barcode'
+            ? 'Codice a barre'
+            : 'Ingrediente a mano'
+      }
     >
-      {modo === 'catalogo' ? (
+      {modo === 'barcode' ? (
+        <div className="space-y-3">
+          <ScannerBarcode
+            onCodice={async (codice) => {
+              setStatoRicerca('Cerco su Open Food Facts…');
+              const esito = await cercaProdotto(codice);
+              if (esito.stato !== 'trovato') {
+                setStatoRicerca(
+                  esito.stato === 'assente'
+                    ? `Il codice ${codice} non è in Open Food Facts. Aggiungilo a mano.`
+                    : esito.messaggio,
+                );
+                return;
+              }
+              // il prodotto diventa un alimento tuo: da lì in poi si cerca per nome
+              const p = esito.prodotto;
+              const id = salvaAlimento(alimentoDaProdotto(p));
+              setStatoRicerca('');
+              onAggiungi({
+                foodId: id,
+                // molti prodotti hanno marca uguale al nome: ripeterla è rumore
+                nome: p.marca && !p.nome.toLowerCase().includes(p.marca.toLowerCase())
+                  ? `${p.nome} (${p.marca})`
+                  : p.nome,
+                qta: p.porzioneG && p.porzioneG > 0 ? Math.round(p.porzioneG) : 100,
+                unita: 'g',
+              });
+            }}
+          />
+          {statoRicerca && <p className="text-[11px] text-muted">{statoRicerca}</p>}
+        </div>
+      ) : modo === 'catalogo' ? (
         <div>
           <div className="relative">
             <Search

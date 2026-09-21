@@ -4,6 +4,7 @@ import { Layout } from './components/Layout';
 import { useStore } from './store/useStore';
 import { applicaTema, ascoltaSistema } from './lib/theme';
 import { backupSeServe } from './lib/backup';
+import { useAutoSyncSalute } from './lib/syncSalute';
 import Onboarding from './pages/Onboarding';
 import Dashboard from './pages/Dashboard';
 import Allena from './pages/Allena';
@@ -41,6 +42,9 @@ export default function App() {
   useEffect(() => {
     if (fatto) void backupSeServe();
   }, [fatto]);
+
+  // passi, calorie e sonno si aggiornano da soli: all'avvio e al rientro nell'app
+  useAutoSyncSalute(fatto);
 
   if (!fatto) return <Onboarding />;
 

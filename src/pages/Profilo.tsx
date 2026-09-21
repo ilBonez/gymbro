@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Moon, RotateCcw, Save, Smartphone, Sun } from 'lucide-react';
+import { Moon, RotateCcw, Save, Smartphone, Sun, Trash2 } from 'lucide-react';
 import { useStore } from '../store/useStore';
 import { ACTIVITY_FACTORS, GOAL_RULES, bmi, bmiCategoria } from '../lib/nutrition';
 import type { ActivityLevel, Sex } from '../types';
@@ -9,6 +9,41 @@ import { Button, Card, Field, SectionTitle, Stat, Warn, cx, inputCls } from '../
 import { TEMI } from '../lib/theme';
 import { BackupPannello, ImpostazioniNotifichePannello } from '../components/ImpostazioniDati';
 import type { Tema } from '../lib/theme';
+
+/** I prodotti letti col codice a barre, da cancellare se ne è entrato uno sbagliato. */
+function AlimentiMieiPannello() {
+  const alimenti = useStore((s) => s.alimentiMiei);
+  const elimina = useStore((s) => s.eliminaAlimento);
+
+  if (alimenti.length === 0) return null;
+
+  return (
+    <>
+      <SectionTitle>I miei alimenti · {alimenti.length}</SectionTitle>
+      <Card className="!p-2">
+        <ul className="divide-y divide-line/60">
+          {alimenti.map((f) => (
+            <li key={f.id} className="flex items-center gap-2.5 px-2 py-2.5">
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-sm font-medium">{f.nome}</p>
+                <p className="text-[11px] tabular-nums text-muted">
+                  {f.kcal} kcal · P {f.proteine} · C {f.carbs} · G {f.grassi} — per 100 g
+                </p>
+              </div>
+              <button
+                onClick={() => elimina(f.id)}
+                aria-label={`Elimina ${f.nome}`}
+                className="shrink-0 rounded-lg p-1.5 text-muted hover:text-red-500"
+              >
+                <Trash2 size={14} />
+              </button>
+            </li>
+          ))}
+        </ul>
+      </Card>
+    </>
+  );
+}
 
 export default function Profilo() {
   const profile = useStore((s) => s.profile);
@@ -237,6 +272,8 @@ export default function Profilo() {
       <ImpostazioniNotifichePannello />
 
       <BackupPannello />
+
+      <AlimentiMieiPannello />
 
       <SectionTitle>Dati</SectionTitle>
       <div className="space-y-2.5">

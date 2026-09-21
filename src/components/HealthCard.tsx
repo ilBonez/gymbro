@@ -7,12 +7,12 @@ import {
   chiediPermessi,
   fmtSonno,
   kcalMovimento,
-  leggiDati,
   mediaKcalAttive,
   mediaPassi,
   mediaSonnoMin,
   statoHealth,
 } from '../lib/health';
+import { sincronizzaSalute } from '../lib/syncSalute';
 import type { DatiHealth, StatoHealth } from '../lib/health';
 import { Anelli, anelliGiornata } from './Anelli';
 import { Button, Card, SectionTitle, Tag, cx } from './ui';
@@ -21,12 +21,9 @@ import { oggi } from '../lib/date';
 
 export function HealthCard() {
   const health = useStore((s) => s.health);
-  const setHealth = useStore((s) => s.setHealth);
-  const setGiorniSalute = useStore((s) => s.setGiorniSalute);
   const giorniSalute = useStore((s) => s.giorniSalute);
   const obiettivi = useStore((s) => s.obiettiviAttivita);
   const addPeso = useStore((s) => s.addPeso);
-  const profile = useStore((s) => s.profile);
   const targets = useTargets(true);
 
   const [stato, setStato] = useState<StatoHealth | null>(null);
@@ -44,16 +41,12 @@ export function HealthCard() {
     setCaricando(true);
     setMsg('');
     try {
-      const d = await leggiDati(14, profile?.pesoKg ?? 75);
+      const d = await sincronizzaSalute(true);
+      if (!d) {
+        setMsg('Health Connect non ha restituito dati: controlla i permessi.');
+        return;
+      }
       setDati(d);
-      setGiorniSalute(d.giorni);
-      setHealth({
-        collegato: true,
-        ultimaSync: new Date().toISOString(),
-        passiMedi: mediaPassi(d.giorni),
-        kcalAttiveMedie: mediaKcalAttive(d.giorni),
-        fcRiposo: d.fcRiposo,
-      });
       if (!d.pesoKg && d.giorni.length === 0) {
         setMsg('Health Connect è collegato ma non contiene ancora dati.');
       }
